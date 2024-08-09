@@ -3,19 +3,60 @@ from os.path import join as j
 # Use a config file
 configfile: "config.yaml"
 
-RAW_DATA_DIR = pjoin(DATA_DIR, "raw")
-DERIVED_DATA_DIR = pjoin(DATA_DIR, "derived")
+RAW_DIR = j(config["data_dir"], "raw")
+DERIVED_DIR = j(config["data_dir"], "derived")
 
-"""
+FIG_DIR = j(config["fig_dir"], "figs")
+
+LETTER_METADATA = j(RAW_DIR, "{venue}_letter_metadata.csv")
+PAPER_IMPACT = j(RAW_DIR, "{venue}_paper_impact.csv")
+PAPER_FIELDS = j(RAW_DIR, "{venue}_fields.csv")
+PAPER_RETRACTIONS = j(RAW_DIR, "{venue}_retractions.csv")
+
+AGG_LETTERS = j(RAW_DIR, "agg", "agg_letters.csv")
+AGG_NONLETTERS = j(RAW_DIR, "agg", "agg_nonletters.csv")
+AGG_FIELDS = j(RAW_DIR, "agg", "agg_fields.csv")
+
+
+IMPACT_RANK_HISTOGRAM = j(FIG_DIR, "impact_rank_histogram.png")
+
+####################
+# PARAMETERS
+####################
+VENUES = ["Nature", "Science", "PNAS", "PRL"]
+
 rule all:
     input:
-        FIG1
+        AGG_LETTERS,
+        AGG_NONLETTERS,
+        AGG_FIELDS,
+        IMPACT_RANK_HISTOGRAM
 
-rule figure1:
+rule agg_letters:
     input:
-        SOME_DATASET
-    output:
-        FIG1
-    shell:
-        "python scripts/plot_fig1.py {input} {output}"
-"""
+        letters=expand(LETTER_METADATA, venue=VENUES),
+        impacts=expand(PAPER_IMPACT, venue=VENUES)
+    output: AGG_LETTERS
+    script: "scripts/processing/agg_letters.py"
+
+rule agg_nonletters:
+    input: 
+        letters=expand(LETTER_METADATA, venue=VENUES),
+        impacts=expand(PAPER_IMPACT, venue=VENUES),
+        retractions=expand(PAPER_RETRACTIONS, venue=VENUES)
+    output: AGG_NONLETTERS
+    script: "scripts/processing/agg_nonletters.py"
+        
+rule agg_fields:
+    input:
+        fields=expand(PAPER_FIELDS, venue=VENUES)
+    output: AGG_FIELDS
+    script: "scripts/processing/agg_fields.py"
+
+rule plot_impact_rank_histogram:
+    input:
+        rules.agg_letters.output,
+        rules.agg_nonletters.output,
+        rules.agg_fields.output
+    output: IMPACT_RANK_HISTOGRAM
+    script: "scripts/plotting/plot_impact_rank_histogram.R"
