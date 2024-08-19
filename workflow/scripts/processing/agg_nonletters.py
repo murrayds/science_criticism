@@ -16,7 +16,7 @@ for index in range(len(snakemake.input.letters)):
 
     # Remove those articels with fewer than 5 references, they tend to be commentaries, 
     # news items, and other non research articles that should not be in the analysis
-    articles = articles.query('ReferenceCount>=5') # Filter Comment
+    articles = articles.query('ReferenceCount >= 5') # Filter Comment
     
     # Remove articles that have recieved a critical letter...
     articles = articles[~articles.id.isin(letters.original_id)]
@@ -27,5 +27,9 @@ for index in range(len(snakemake.input.letters)):
     articles_list.append(articles)
     
 agg_articles = pd.concat(articles_list, ignore_index=True)
+
+month = pd.read_csv(snakemake.input.month)
+agg_articles = pd.merge(agg_articles, month, on="id", how = "left")
+
 
 agg_articles.to_csv(snakemake.output[0], index=False)

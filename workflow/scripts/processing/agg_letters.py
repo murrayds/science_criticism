@@ -5,9 +5,9 @@ for index in range(len(snakemake.input.letters)):
     # we want to merge these into a common dataframe for all journals.....
     letters = pd.read_csv(snakemake.input.letters[index])
     articles = pd.read_csv(snakemake.input.impacts[index])
-
-    letters["RelativeTime"] = letters.letter_year - letters.original_year
     
+    letters["lag"] = letters.letter_year - letters.original_year
+
     # filter to the desired timeframe
     letters = letters.query('original_year<2020')
     letters = letters.query('original_year>=2000')
@@ -28,12 +28,22 @@ for index in range(len(snakemake.input.letters)):
 
     # For analyses centering on the original paper, we do not care whether they received 
     # multiple critical letters. Drop duplicates to simplify later work.
+    
+    # Count the number of critical letters for each original paper
+    letter_counts = letters_with_impact.groupby('original_id').size().reset_index(name='num_critical_letters')
+    
+    # Merge the counts back into the main dataframe
+    letters_with_impact = pd.merge(letters_with_impact, letter_counts, on='original_id', how='left')
+
     letters_with_impact = letters_with_impact.drop_duplicates(subset='original_id')
 
     letters_list.append(letters_with_impact)
 
 # combine them all into a single dataframe
 agg_letters = pd.concat(letters_list, ignore_index=True)
+
+month = pd.read_csv(snakemake.input.month)
+agg_letters = pd.merge(agg_letters, month, on="id", how = "left")
 
 # write the output
 agg_letters.to_csv(snakemake.output[0], index=False)
