@@ -22,6 +22,7 @@ supp.pdf
 *.csv
 *.tsv
 *.txt
+*.pickle
 
 # Office files
 *.docx
