@@ -1,5 +1,4 @@
 library(readr)
-library(xtable)
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(ggplot2))
 
@@ -7,30 +6,28 @@ source("scripts/plotting/theme.R")
 
 df_matched <- read_csv(snakemake@input[[1]], col_types = cols())
 
+param <- snakemake@wildcards[[1]]
+if (param == "lag0") {
+  df_matched <- df_matched %>% filter(lag == 0)
+} else if (param == "lag1plus") {
+  df_matched <- df_matched %>% filter(lag > 0)
+}
+
 # First, perform statistical test...
 tests <- df_matched %>%
   mutate(venue = factor(venue)) %>%
   group_by(venue) %>%
   arrange(match.group, type) %>%
   do(
-    w = wilcox.test(
+    t = t.test(
       (growth) ~ type,
       data = .,
-      paired = TRUE
-    ),
-    t = t.test(
-      (growth) ~ type, 
-      data = ., 
       paired = TRUE
     )
   ) %>%
   summarize(
     venue = venue,
-    t.statistic = t$statistic,
-    t.estimate = t$estimate,
     t.p.value = round(t$p.value, 4),
-    wilcox.statistic = w$statistic,
-    wilxoc.p.value = round(w$p.value, 4),
   )
 
 plotdata <- df_matched %>%
@@ -44,43 +41,43 @@ plotdata <- df_matched %>%
     interval = sd(growth) / sqrt(n()),
     upper = mu_growth + interval,
     lower = mu_growth - interval
-  ) 
+  )
 
 # Format the test results that will be displayed on the plot...
 plottests <- plotdata %>%
   group_by(venue) %>%
   summarize(
     type = "Treatment",
-    mx = max(upper) 
+    mx = max(upper)
   ) %>%
   left_join(tests, by = "venue") %>%
   mutate(
     signif = case_when(
-          t.p.value > 0.05 ~ "",
-          t.p.value > 0.01 ~ "*",
-          t.p.value > 0.001 ~ "**",
-          !is.na(t.p.value) ~ "***",
-          TRUE ~ NA_character_
-        )
+      t.p.value > 0.05 ~ "",
+      t.p.value > 0.01 ~ "*",
+      t.p.value > 0.001 ~ "**",
+      !is.na(t.p.value) ~ "***",
+      TRUE ~ NA_character_
+    )
   )
 
 # Now construct the plot object
 pooled_plot <- plotdata %>%
   ggplot(aes(x = venue, y = mu_growth, color = venue, shape = type)) +
-  geom_point(position = position_dodge(width=0.5), size = 4) +
+  geom_point(position = position_dodge(width = 0.5), size = 4) +
   geom_errorbar(
-    aes(ymin = lower, ymax = upper), 
-    width=0, 
-    position=position_dodge(width=0.5)
+    aes(ymin = lower, ymax = upper),
+    width = 0,
+    position = position_dodge(width = 0.5)
   ) +
   geom_text(
-    data = plottests, 
-    aes(label = signif, y = mx), 
+    data = plottests,
+    aes(label = signif, y = mx),
     nudge_y = 0.10,
     size = 6
   ) +
   scale_shape_manual(values = c(16, 1)) +
-  scale_color_manual(values = venue_colors(), guide=FALSE) +
+  scale_color_manual(values = venue_colors(), guide = FALSE) +
   theme_criticism() +
   theme(
     legend.position = "inside",
@@ -110,15 +107,15 @@ pairwise_plot <- df_matched %>%
   ggplot(aes(x = venue, y = mean_diff, color = venue)) +
   geom_point(size = 4) +
   geom_errorbar(
-    aes(ymin = lower, ymax = upper), 
-    width=0
+    aes(ymin = lower, ymax = upper),
+    width = 0
   ) +
   geom_text(
-    aes(label = signif, y = upper), 
+    aes(label = signif, y = upper),
     nudge_y = 0.075,
     size = 6
   ) +
-  scale_color_manual(values = venue_colors(), guide=FALSE) +
+  scale_color_manual(values = venue_colors(), guide = FALSE) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   theme_criticism() +
   theme(
@@ -129,32 +126,18 @@ pairwise_plot <- df_matched %>%
 
 # Save the figure output
 ggsave(
-    pooled_plot,
-    filename = snakemake@output[[1]],
-    width = 4,
-    height = 4,
-    bg = "white"
+  pooled_plot,
+  filename = snakemake@output[[1]],
+  width = 4,
+  height = 4,
+  bg = "white"
 )
 
 # Save the figure output
 ggsave(
-    pairwise_plot,
-    filename = snakemake@output[[2]],
-    width = 4,
-    height = 4,
-    bg = "white"
-)
-
-# Construct the latex table for the test results...
-latex_table <- xtable(
-  tests,
-  align = c("llrrrrr"),
-  digits = 4
-)
-
-print(
-  latex_table,
-  include.rownames = FALSE,
-  booktabs = TRUE,
-  file = snakemake@output[[3]]
+  pairwise_plot,
+  filename = snakemake@output[[2]],
+  width = 4,
+  height = 4,
+  bg = "white"
 )

@@ -31,13 +31,17 @@ plotdata <- df %>%
   # Now, identify the edge of each bin, which will be used for plotting
   rowwise() %>%
   mutate(
-    binedge = as.numeric(unlist(
-      strsplit(
-        gsub(
-          "(?![,.])[[:punct:]]", "", 
-          as.character(bin), 
-          perl=TRUE
-        ), ","))[2])
+    binedge = as.numeric(
+      unlist(
+        strsplit(
+          gsub(
+            "(?![,.])[[:punct:]]", "",
+            as.character(bin),
+            perl = TRUE
+          ),
+          ","
+        )
+      )[2])
   ) %>%
   # For each bin/venue, estimate the probability of a letter
   group_by(binedge, venue) %>%

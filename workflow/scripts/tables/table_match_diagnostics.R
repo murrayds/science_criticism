@@ -1,86 +1,117 @@
-library(readr)
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tidyr))
+library(readr)
+library(xtable)
+
+source("scripts/common.R")
+source("scripts/plotting/theme.R")
+
+agg <- read_csv(snakemake@input[[1]], col_types = cols())
 
 
-letters <- read_csv(snakemake@input[[1]], col_types = cols())
-match_files <- snakemake@input[c(2:length(snakemake@input))]
-
-# First, build a dataframe calculating the "impact before" 
-# values for every letter
-letters <- data.table::rbindlist(lapply(c(0:12), function(x) {
-  letters %>%
-    filter(lag == x) %>%
-    rename(
-      impact_before = paste0("impact_", ifelse(x == 0, 1, x), "year")
-    ) %>%
-    select(id, venue, original_year, month, lag, impact_before)
-}))
-
-# Now, we iterate through each file, calculating information about
-# the parameters, matches made, and effects observed
-matched <- data.table::rbindlist(lapply(match_files, function(f) {
-  df <- read_csv(f, col_types = cols())
-
-  delay <- as.numeric(sub(".*_(\\d+)delay_.*", "\\1", f))
-  impact <- as.numeric(sub(".*_(\\d+\\.\\d+)impact_.*", "\\1", f))
-  year <- as.numeric(sub(".*_(\\d+)year\\.csv$", "\\1", f))
-
-  # extract the file parameters
-  t_matched <- df %>%
-    group_by(venue) %>%
-    summarize(
-      num_matched = sum(type == "letter")
-    ) %>%
+mutate_counts_table <- function(df) {
+  df %>%
+    select(venue, count_candidates, num_matched, delay, impact, year) %>%
+    rowwise() %>%
     mutate(
-      delay = delay,
-      impact = impact,
-      year = year
-    )
-
-  # Conduct statistical tests and save results
-  tests <- df %>%
-    mutate(venue = factor(venue)) %>%
-    group_by(venue) %>%
-    arrange(match.group, type) %>%
-    do(
-      w = wilcox.test(
-        (growth) ~ type,
-        data = .,
-        paired = TRUE
-      ),
-      t = t.test(
-        (growth) ~ type,
-        data = .,
-        paired = TRUE
+      value = paste0(
+        count_candidates,
+        " (",
+        round(num_matched / count_candidates * 100, 1),
+        "%)"
       )
     ) %>%
-    summarize(
-      venue = venue,
-      t.statistic = t$statistic,
-      t.estimate = t$estimate,
-      t.p.value = round(t$p.value, 4),
-      wilcox.statistic = w$statistic,
-      wilxoc.p.value = round(w$p.value, 4),
-    )
+    select(-count_candidates, -num_matched)
+}
 
-  # Now examine which records were excluded due to 
-  # filters, and which were not matched
-  letters %>%
+mutate_tstats_table <- function(df) {
+  print(names(df))
+  df %>%
+    select(venue, t.estimate, t.p.value, delay, impact, year) %>%
+    rowwise() %>%
     mutate(
-      year_oob = !(original_year <= (2021 - delay)),
-      month_isna = is.na(month),
-      lag_oob = lag > 6,
-      low_impact = impact_before < 5
+      value = paste0(
+        round(t.estimate, 2),
+        " (p = ",
+        formatC(round(t.p.value, 3), format = "f", digits = 3),
+        ")"
+      )
     ) %>%
-    group_by(venue) %>%
-    summarize(
-      count_total = n(),
-      count_candidates = count_total -
-        sum(year_oob, month_isna, lag_oob, low_impact),
-    ) %>%
-    left_join(t_matched, by = "venue") %>%
-    left_join(tests, by = "venue")
-}))
+    select(-t.estimate, -t.p.value)
+}
 
-write_csv(matched, snakemake@output[[1]])
+mutate_wilcox_table <- function(df) {
+  print(names(df))
+  df %>%
+    select(venue, wilcox.p.value, delay, impact, year) %>%
+    rowwise() %>%
+    mutate(
+      value = paste0(
+        "p = ",
+        formatC(round(wilcox.p.value, 3), format = "f", digits = 3)
+      )
+    ) %>%
+    select(-wilcox.p.value)
+}
+
+# First, lets perform some formatting on the table
+agg_formatted <- agg %>%
+  mutate(
+    venue = factor(venue, levels = venue_levels())
+  )
+
+param <- snakemake@wildcards[[1]]
+if (param == "counts") {
+  agg_formatted <- agg_formatted %>% mutate_counts_table()
+} else if (param == "tstats") {
+  agg_formatted <- agg_formatted %>% mutate_tstats_table()
+} else if (param == "wilcox") {
+  agg_formatted <- agg_formatted %>% mutate_wilcox_table()
+}
+
+agg_formatted <- agg_formatted %>%
+  pivot_wider(names_from = venue, values_from = value) %>%
+  select(delay, impact, year, venue_levels())
+
+
+
+# We will narrow the table into three separate pieces, and
+# for each we will vary only a single parameter. 
+delay_table <- agg_formatted %>%
+  filter(impact == 0.1, year == 1)
+delay_table[nrow(delay_table) + 1, ] <- NA
+
+cite_tolerance_table <- agg_formatted %>%
+  filter(delay == 3, year == 1)
+cite_tolerance_table[nrow(cite_tolerance_table) + 1, ] <- NA
+
+year_tolerance_table <- agg_formatted %>%
+  filter(delay == 3, impact == 0.1)
+
+# Aggregate mini tables, perform final polish
+tab <- data.table::rbindlist(
+  list(delay_table, cite_tolerance_table, year_tolerance_table)
+) %>%
+  mutate(impact = ifelse(is.na(impact), NA, paste0(impact * 100, "%"))) %>%
+  rename(
+    `Delay` = delay,
+    `Impact $\\pm$ $\\epsilon$` = impact,
+    `Year $\\pm$ $\\epsilon$` = year
+  )
+
+
+# Construct the table
+latex_table <- xtable(
+  tab,
+  align = c("lccccccc"),
+  digits = 0,
+)
+
+# Output to a file
+print(
+  latex_table,
+  include.rownames = FALSE,
+  booktabs = TRUE,
+  sanitize.colnames.function = function(x) { x },
+  file = snakemake@output[[1]]
+)

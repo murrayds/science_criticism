@@ -16,25 +16,31 @@ FIELD_HIERARCHY = j(RAW_DIR, "mag_field_hierarchy.csv")
 #TODO Later this should be integrated in files at query-time
 MONTH_OF_PUBLICATION = j(RAW_DIR, "month_of_publication.csv")
 
+JOURNAL_REFS = j(RAW_DIR, "dl", "journal_refs_{year}.csv")
+PAPER_FIELD_REFS = j(RAW_DIR, "dl", "paper_field_refs.csv")
+
 AGG_LETTERS = j(DERIVED_DIR, "agg", "agg_letters.csv")
 AGG_NONLETTERS = j(DERIVED_DIR, "agg", "agg_nonletters.csv")
 AGG_FIELDS = j(DERIVED_DIR, "agg", "agg_fields.csv")
 
+OBSERVED_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "observed", "observed_journal_cooccurence_counts_{year}.pickle")
+NULL_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "null", "null_journal_cooccurence_counts_{year}_iter{iter}.pickle")
+
 MATCHED_PAPERS_FOR_IMPACT_COMPARISON = j(DERIVED_DIR, "matched", "matched_papers_stage1_{delay}delay_{cite_tolerance}impact_{year_tolerance}year.csv")
+AGG_MATCH_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_match_diagnostics.csv")
 
 IMPACT_RANK_HISTOGRAM = j(FIG_DIR, "impact_rank_histogram.png")
 IMPACT_LIKELIHOOD_SCATTER = j(FIG_DIR, "impact_likelihood_scatter.png")
 
 FIT_BY_VENUE_TABLE = j(FIG_DIR, "tables", "fit_by_venue.txt")
 
+POOLED_IMPACT_COMPARISON_PLOT = j(FIG_DIR, "pooled_{lag_subset}_impact_comparison_plot.png")
+PAIRWISE_IMPACT_COMPARISON_PLOT = j(FIG_DIR, "pairwise_{lag_subset}_impact_comparison_plot.png")
 
-POOLED_IMPACT_COMPARISON_PLOT = j(FIG_DIR, "pooled_impact_comparison_plot.png")
-PAIRWISE_IMPACT_COMPARISON_PLOT = j(FIG_DIR, "pairwise_impact_comparison_plot.png")
-IMPACT_COMPARISON_TEST_TABLE = j(FIG_DIR, "tables", "impact_comparison_table.txt")
+FIELD_REPRESENTATION_PLOT = j(FIG_DIR, "field_representation_plot.png")
 
-TABLE_MATCH_DIAGNOSTICS = j(FIG_DIR, "tables", "match_diagnostics.csv")
 MATCHING_DIAGNOSTIC_IMPACT_PLOT = j(FIG_DIR, "diagnostics", "matching_diagnostic_impact_plot.png")
-
+MATCH_DIAGNOSTICS_TABLE = j(FIG_DIR, "tables", "match_{diagnostic}_parameters.txt")
 
 ####################
 # PARAMETERS
@@ -46,8 +52,20 @@ IMPACT_DELAY = [2, 3, 4]
 CITE_TOLERANCE = [0.05, 0.1, 0.15]
 YEAR_TOLERANCE = [1, 2, 3]
 
+LAG_SUBSET = ["all", "lag0", "lag1plus"]
+DIAGNOSTICS = ["counts", "tstats", "wilcox"]
+
+YEARS_OF_STUDY = list(range(2000, 2021))
+NULL_ITERS = list(range(0,10))
+
+
+
 rule all:
     input:
+        expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
+        expand(OBSERVED_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY),
+        expand(NULL_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY, iter=NULL_ITERS),
+        PAPER_FIELD_REFS,
         IMPACT_RANK_HISTOGRAM,
         IMPACT_LIKELIHOOD_SCATTER,
         expand(
@@ -56,11 +74,33 @@ rule all:
             cite_tolerance = CITE_TOLERANCE,
             year_tolerance = YEAR_TOLERANCE
         ),
-        POOLED_IMPACT_COMPARISON_PLOT,
-        PAIRWISE_IMPACT_COMPARISON_PLOT,
+        expand(POOLED_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
+        expand(PAIRWISE_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
         FIT_BY_VENUE_TABLE,
-        TABLE_MATCH_DIAGNOSTICS,
-        MATCHING_DIAGNOSTIC_IMPACT_PLOT
+        AGG_MATCH_DIAGNOSTICS,
+        expand(MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS),
+        MATCHING_DIAGNOSTIC_IMPACT_PLOT,
+        FIELD_REPRESENTATION_PLOT
+
+rule dl_gbq_journal_refs:
+    output: JOURNAL_REFS
+    script: "scripts/download/dl_gbq_journal_refs.py"
+
+rule dl_gbq_paper_field_refs:
+    output: PAPER_FIELD_REFS
+    script: "scripts/download/dl_gbq_paper_field_refs.py"
+
+rule count_journal_cooccurence_observed:
+    input: rules.dl_gbq_journal_refs.output
+    output: OBSERVED_JOURNAL_COOCCURENCE_COUNTS
+    params: shuffle = False
+    script: "scripts/processing/count_journal_cooccurence.py"
+
+rule count_journal_cooccurence_null:
+    input: rules.dl_gbq_journal_refs.output
+    output: NULL_JOURNAL_COOCCURENCE_COUNTS
+    params: shuffle = True
+    script: "scripts/processing/count_journal_cooccurence.py"
 
 rule agg_letters:
     input:
@@ -121,16 +161,21 @@ rule table_fit_by_venue:
     output: FIT_BY_VENUE_TABLE
     script: "scripts/tables/table_fit_by_venue.R"
 
-rule table_match_diagnostics:
+rule agg_match_diagnostics:
     input: 
         rules.agg_letters.output,
-        expand(
+        collect(
             rules.match_papers_for_impact_comparison.output,
             delay = IMPACT_DELAY,
             cite_tolerance = CITE_TOLERANCE,
             year_tolerance = YEAR_TOLERANCE
         )
-    output: TABLE_MATCH_DIAGNOSTICS
+    output: AGG_MATCH_DIAGNOSTICS
+    script: "scripts/processing/agg_match_diagnostics.R"
+
+rule table_match_diagnostics:
+    input: rules.agg_match_diagnostics.output
+    output: MATCH_DIAGNOSTICS_TABLE
     script: "scripts/tables/table_match_diagnostics.R"
 
 rule plot_impact_comparison:
@@ -143,8 +188,7 @@ rule plot_impact_comparison:
         )
     output:
         POOLED_IMPACT_COMPARISON_PLOT,
-        PAIRWISE_IMPACT_COMPARISON_PLOT,
-        IMPACT_COMPARISON_TEST_TABLE
+        PAIRWISE_IMPACT_COMPARISON_PLOT
     script: "scripts/plotting/plot_impact_comparison.R"
 
 rule plot_match_diagnostic_impact:
@@ -158,3 +202,11 @@ rule plot_match_diagnostic_impact:
     output:
         MATCHING_DIAGNOSTIC_IMPACT_PLOT
     script: "scripts/plotting/plot_match_diagnostic_impact.R"
+
+rule plot_field_representation:
+    input: 
+        rules.agg_letters.output,
+        rules.agg_nonletters.output,
+        rules.agg_fields.output
+    output: FIELD_REPRESENTATION_PLOT
+    script: "scripts/plotting/plot_field_representation.R"

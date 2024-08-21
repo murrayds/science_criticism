@@ -1,16 +1,15 @@
 source("scripts/plotting/theme.R")
 
 logbin <- function(data, scale = 1, zeros = FALSE) {
-  # Generate breakpoints of exponentially increasing width 
+  # Generate breakpoints of exponentially increasing width
   # for use in binning logarithmic data.
   if (scale < 1) {
     stop("Function requires scale >= 1.")
   }
-  
+
   count <- table(data)
   smax <- max(data)
-  
-  
+
   jmax <- ceiling(log(smax) / log(scale))
   if (zeros) {
     binedges <- scale^(0:jmax)
@@ -23,13 +22,15 @@ logbin <- function(data, scale = 1, zeros = FALSE) {
   return(x)
 }
 
-
 load_aggregate_df <- function(letter_path, nonletter_path) {
   library(dplyr)
   library(readr)
 
   letters <- read_csv(letter_path, col_types = cols()) %>%
-    select(original_id, original_year, venue, impact_2year, impact_3year, impact_4year, lag) %>%
+    select(
+      original_id, original_year, venue,
+      impact_2year, impact_3year, impact_4year, lag
+    ) %>%
     rename(id = original_id, year = original_year) %>%
     mutate(type = "letter")
 

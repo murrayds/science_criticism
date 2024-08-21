@@ -13,9 +13,8 @@ fields <- read_csv(snakemake@input[[3]], col_types = cols())
 # This is the amount of time POST CRITICAL LETTER at which we should measure
 # the impact.
 impact_delay <- as.numeric(snakemake@wildcards[[1]])
-impact_before_lower_limit <- as.numeric(snakemake@wildcards[[2]])
-cite_tolerance <- as.numeric(snakemake@wildcards[[3]])
-year_tolerance <- as.numeric(snakemake@wildcards[[4]])
+cite_tolerance <- as.numeric(snakemake@wildcards[[2]])
+year_tolerance <- as.numeric(snakemake@wildcards[[3]])
 
 # Apply basic filtering and pre-processing first...
 letters <- letters %>%
@@ -80,7 +79,7 @@ prepare_df_for_matching <- function(x, letters, articles, fields) {
     ) %>%
     # remove instances of no citations, since they don't give us any reliable
     # info for matching
-    filter(impact_before >= impact_before_lower_limit)
+    filter(impact_before >= 5)
 
   # Now we will incorperate the field-level information...
   df_prepared <- fields %>% 
@@ -158,7 +157,7 @@ df_matched <- df_matched %>%
   rowwise() %>%
   mutate(
     growth = impact_after / impact_before,  # calculate the growth
-    match.group = paste0(lag, ".", subclass) # set unique group ID
+    match.group = paste0(venue, ".", lag, ".", subclass) # set unique group ID
   ) %>%
   ungroup() %>%
   arrange(venue, match.group, type) %>%

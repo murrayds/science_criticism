@@ -11,22 +11,26 @@ fields <- read_csv(snakemake@input[[3]], col_types = cols())
 # Break into 6 discrete time periods. Merge in level 1 (granular)
 # fields. Calculate percentile rank of 2-year impact based on the
 # distribution within each venue, time period, and field. When a paper
-# is assigned multiple level 1 fields, take the average across all fields
+# is assigned multiple level 0 fields, take the average across all fields
 df_ranked <- fields %>%
-  filter(level == 1) %>%
   inner_join(df, by = "id") %>%
+  group_by(id) %>%
+  filter(!duplicated(field_level0)) %>%
+  ungroup() %>%
+  select(-field) %>%
+  rename(field = field_level0) %>%
   mutate(year = as.integer(year)) %>%
   mutate(period = cut(year, breaks = 4)) %>%
   group_by(venue, period, field) %>%
   mutate(
-    rank = percent_rank(impact_4year)
+    rank = percent_rank(impact_3year)
   ) %>%
-  group_by(venue, type, lag, id) %>%
+  group_by(venue, type, period, id) %>%
   summarize(
     mu_rank = mean(rank)
   )
 
-# Construct the data for the plot. Examine only the letters and see which 
+# Construct the data for the plot. Examine only the letters and see which
 # percentile bin they disproporinately fall within.
 plotdata <- df_ranked %>%
   ungroup() %>%
@@ -45,7 +49,7 @@ plotdata <- df_ranked %>%
     prop = n() / first(total)
   ) %>%
   ungroup() %>%
-  # We lose a few records when we filter NAs, its because 
+  # We lose a few records when we filter NAs, its because
   # they could not be matched to a level1 field in the time period
   filter(!is.na(category))
 

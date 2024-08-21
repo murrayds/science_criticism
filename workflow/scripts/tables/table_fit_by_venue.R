@@ -8,11 +8,11 @@ df <- load_aggregate_df(snakemake@input[[1]], snakemake@input[[2]])
 fields <- read_csv(snakemake@input[[3]], col_types = cols())
 
 # Generate the raw and field-normalized impact for these data
-df_ranked <- fields %>% 
+df_ranked <- fields %>%
   filter(level == 1) %>%
   inner_join(df, by = "id") %>%
   mutate(year = as.integer(year)) %>%
-  mutate(period = cut(year, breaks=6)) %>%
+  mutate(period = cut(year, breaks = 6)) %>%
   group_by(venue, period, field) %>%
   mutate(
     impact_denominator = mean(impact_2year)
@@ -40,7 +40,7 @@ t <- df_ranked %>%
   ) %>%
   mutate(mod = unlist(mod)) %>%
   mutate(mod = round(mod, 4)) %>%
-  pivot_wider(names_from = "impact_type", values_from="mod") %>%
+  pivot_wider(names_from = "impact_type", values_from = "mod") %>%
   select(venue, raw_impact, norm_impact) %>%
   rename(
     `Venue` = venue,
