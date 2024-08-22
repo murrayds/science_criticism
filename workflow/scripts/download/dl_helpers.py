@@ -55,7 +55,7 @@ def extract_data_to_local_file(
     bucket = storage_client.get_bucket("dmurray_temp")
 
     # Create a local directory to store the downloaded files
-    local_dir = f".temp_random_seq"
+    local_dir = f".temp{random_seq}"
     if os.path.exists(local_dir):
         shutil.rmtree(local_dir)
     # Create the directory

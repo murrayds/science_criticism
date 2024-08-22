@@ -17,6 +17,7 @@ FIELD_HIERARCHY = j(RAW_DIR, "mag_field_hierarchy.csv")
 MONTH_OF_PUBLICATION = j(RAW_DIR, "month_of_publication.csv")
 
 JOURNAL_REFS = j(RAW_DIR, "dl", "journal_refs_{year}.csv")
+TARGET_JOURNAL_REFS = j(RAW_DIR, "dl", "target_journal_refs.csv")
 PAPER_FIELD_REFS = j(RAW_DIR, "dl", "paper_field_refs.csv")
 
 AGG_LETTERS = j(DERIVED_DIR, "agg", "agg_letters.csv")
@@ -25,6 +26,13 @@ AGG_FIELDS = j(DERIVED_DIR, "agg", "agg_fields.csv")
 
 OBSERVED_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "observed", "observed_journal_cooccurence_counts_{year}.pickle")
 NULL_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "null", "null_journal_cooccurence_counts_{year}_iter{iter}.pickle")
+
+AGG_OBSERVED_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "observed", "agg_observed_journal_cooccurence_counts.pickle")
+AGG_NULL_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "null", "agg_null_journal_cooccurence_counts_iter{iter}.pickle")
+NOVELTY_ZSCORES = j(DERIVED_DIR, "novelty", "journal_zscores_{year}.pickle")
+AGG_NOVELTY_ZSCORES = j(DERIVED_DIR, "novelty", "agg_journal_zscores.pickle")
+PAPER_NOVELTY_SCORES = j(DERIVED_DIR, "novelty", "paper_zscores.csv")
+
 
 MATCHED_PAPERS_FOR_IMPACT_COMPARISON = j(DERIVED_DIR, "matched", "matched_papers_stage1_{delay}delay_{cite_tolerance}impact_{year_tolerance}year.csv")
 AGG_MATCH_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_match_diagnostics.csv")
@@ -55,15 +63,19 @@ YEAR_TOLERANCE = [1, 2, 3]
 LAG_SUBSET = ["all", "lag0", "lag1plus"]
 DIAGNOSTICS = ["counts", "tstats", "wilcox"]
 
-YEARS_OF_STUDY = list(range(2000, 2021))
-NULL_ITERS = list(range(0,10))
+YEARS_OF_STUDY = list(range(2000, 2004))
+NULL_ITERS = list(range(0,5))
 
 
 rule all:
     input:
         expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
+        TARGET_JOURNAL_REFS,
         expand(OBSERVED_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY),
         expand(NULL_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY, iter=NULL_ITERS),
+        expand(NOVELTY_ZSCORES, year = YEARS_OF_STUDY),
+        AGG_NOVELTY_ZSCORES,
+        PAPER_NOVELTY_SCORES,
         PAPER_FIELD_REFS,
         IMPACT_RANK_HISTOGRAM,
         IMPACT_LIKELIHOOD_SCATTER,
@@ -85,6 +97,10 @@ rule dl_gbq_journal_refs:
     output: JOURNAL_REFS
     script: "scripts/download/dl_gbq_journal_refs.py"
 
+rule dl_gbq_target_journal_refs:
+    output: TARGET_JOURNAL_REFS
+    script: "scripts/download/dl_gbq_target_journal_refs.py"
+
 rule dl_gbq_paper_field_refs:
     output: PAPER_FIELD_REFS
     script: "scripts/download/dl_gbq_paper_field_refs.py"
@@ -100,6 +116,26 @@ rule count_journal_cooccurence_null:
     output: NULL_JOURNAL_COOCCURENCE_COUNTS
     params: shuffle = True
     script: "scripts/processing/count_journal_cooccurence.py"
+
+rule calculate_novelty_zscores:
+    input: 
+        observed = rules.count_journal_cooccurence_observed.output,
+        null = lambda wc: collect(
+                    rules.count_journal_cooccurence_null.output,
+                    iter = NULL_ITERS,
+                    year = wc.year
+                )
+    output: NOVELTY_ZSCORES
+    script: "scripts/processing/calculate_novelty_zscores.py"
+
+rule agg_novelty_zscores:
+    input:
+        expand(
+            rules.calculate_novelty_zscores.output, 
+            year = YEARS_OF_STUDY
+        )
+    output: AGG_NOVELTY_ZSCORES
+    script: "scripts/processing/agg_novelty_zscores.py"
 
 rule agg_letters:
     input:
@@ -125,10 +161,18 @@ rule agg_fields:
     output: AGG_FIELDS
     script: "scripts/processing/agg_fields.py"
 
-# so what wildcards are there...
-    # Impact_before tolerance, 0.05 or 0.1 or 0.025?
-    # Year, 1, 2, or 3
-    # Minimum before citations...
+rule calculate_paper_novelty:
+    input: 
+        zscores = rules.agg_novelty_zscores.output,
+        letters = rules.agg_letters.output,
+        nonletters = rules.agg_nonletters.output,
+        refs = rules.dl_gbq_target_journal_refs.output
+    output: PAPER_NOVELTY_SCORES
+    params: 
+        year_min = min(YEARS_OF_STUDY),
+        year_max = max(YEARS_OF_STUDY)
+    script: "scripts/processing/calculate_paper_novelty.py"
+
 rule match_papers_for_impact_comparison:
     input: 
         rules.agg_letters.output,
