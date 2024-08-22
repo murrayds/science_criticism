@@ -1,0 +1,35 @@
+from os.path import join as j
+
+# Use a config file
+configfile: "config.yaml"
+
+
+JOURNAL_REFS = j(RAW_DIR, "dl", "journal_refs_{year}.csv")
+
+OBSERVED_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "observed", "observed_journal_cooccurence_counts_{year}.pickle")
+NULL_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "null", "null_journal_cooccurence_counts_{year}_iter{iter}.pickle")
+
+YEARS_OF_STUDY = list(range(2000, 2021))
+NULL_ITERS = list(range(0,10))
+
+rule all:
+    input:
+        expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
+        expand(OBSERVED_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY),
+        expand(NULL_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY, iter=NULL_ITERS),
+
+rule dl_gbq_journal_refs:
+    output: JOURNAL_REFS
+    script: "dl_gbq_journal_refs.py"
+
+rule count_journal_cooccurence_observed:
+    input: rules.dl_gbq_journal_refs.output
+    output: OBSERVED_JOURNAL_COOCCURENCE_COUNTS
+    params: shuffle = False
+    script: "count_journal_cooccurence.py"
+
+rule count_journal_cooccurence_null:
+    input: rules.dl_gbq_journal_refs.output
+    output: NULL_JOURNAL_COOCCURENCE_COUNTS
+    params: shuffle = True
+    script: "count_journal_cooccurence.py"

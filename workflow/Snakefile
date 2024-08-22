@@ -59,7 +59,6 @@ YEARS_OF_STUDY = list(range(2000, 2021))
 NULL_ITERS = list(range(0,10))
 
 
-
 rule all:
     input:
         expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
