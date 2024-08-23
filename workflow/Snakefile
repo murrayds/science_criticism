@@ -13,12 +13,14 @@ PAPER_IMPACT = j(RAW_DIR, "{venue}_paper_impact.csv")
 PAPER_FIELDS = j(RAW_DIR, "{venue}_fields.csv")
 PAPER_RETRACTIONS = j(RAW_DIR, "{venue}_retractions.csv")
 FIELD_HIERARCHY = j(RAW_DIR, "mag_field_hierarchy.csv")
+PAPER_FEATURES = j(RAW_DIR, "paper_features.csv")
 #TODO Later this should be integrated in files at query-time
 MONTH_OF_PUBLICATION = j(RAW_DIR, "month_of_publication.csv")
 
 JOURNAL_REFS = j(RAW_DIR, "dl", "journal_refs_{year}.csv")
 TARGET_JOURNAL_REFS = j(RAW_DIR, "dl", "target_journal_refs.csv")
 PAPER_FIELD_REFS = j(RAW_DIR, "dl", "paper_field_refs.csv")
+PAPER_FIELD_CITES = j(RAW_DIR, "dl", "paper_field_cites.csv")
 
 AGG_LETTERS = j(DERIVED_DIR, "agg", "agg_letters.csv")
 AGG_NONLETTERS = j(DERIVED_DIR, "agg", "agg_nonletters.csv")
@@ -39,6 +41,9 @@ AGG_MATCH_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_match_diagnostics.csv")
 
 IMPACT_RANK_HISTOGRAM = j(FIG_DIR, "impact_rank_histogram.png")
 IMPACT_LIKELIHOOD_SCATTER = j(FIG_DIR, "impact_likelihood_scatter.png")
+
+PAPER_METRICS_DENSITY_PLOT = j(FIG_DIR, "paper_metrics_density.png")
+PAPER_METRICS_DENSITY_PLOT_TEST_TABLE = j(FIG_DIR, "tables", "paper_metrics_density_test_table.txt")
 
 FIT_BY_VENUE_TABLE = j(FIG_DIR, "tables", "fit_by_venue.txt")
 
@@ -77,8 +82,11 @@ rule all:
         AGG_NOVELTY_ZSCORES,
         PAPER_NOVELTY_SCORES,
         PAPER_FIELD_REFS,
+        PAPER_FIELD_CITES,
         IMPACT_RANK_HISTOGRAM,
         IMPACT_LIKELIHOOD_SCATTER,
+        PAPER_METRICS_DENSITY_PLOT,
+        PAPER_METRICS_DENSITY_PLOT_TEST_TABLE,
         expand(
             MATCHED_PAPERS_FOR_IMPACT_COMPARISON,
             delay = IMPACT_DELAY,
@@ -104,6 +112,10 @@ rule dl_gbq_target_journal_refs:
 rule dl_gbq_paper_field_refs:
     output: PAPER_FIELD_REFS
     script: "scripts/download/dl_gbq_paper_field_refs.py"
+
+rule dl_gbq_paper_field_cites:
+    output: PAPER_FIELD_CITES
+    script: "scripts/download/dl_gbq_paper_field_cites.py"
 
 rule count_journal_cooccurence_observed:
     input: rules.dl_gbq_journal_refs.output
@@ -174,7 +186,7 @@ rule calculate_paper_novelty:
     script: "scripts/processing/calculate_paper_novelty.py"
 
 rule match_papers_for_impact_comparison:
-    input: 
+    input:
         rules.agg_letters.output,
         rules.agg_nonletters.output,
         rules.agg_fields.output
@@ -195,6 +207,20 @@ rule plot_impact_likelihood_scatter:
         rules.agg_nonletters.output
     output: IMPACT_LIKELIHOOD_SCATTER
     script: "scripts/plotting/plot_impact_likelihood_scatter.R"
+
+rule plot_paper_metrics_density:
+    input: 
+        rules.agg_letters.output,
+        rules.agg_nonletters.output,
+        rules.agg_fields.output,
+        rules.dl_gbq_paper_field_refs.output,
+        rules.dl_gbq_paper_field_cites.output,
+        PAPER_FEATURES # TODO: Replace with novelty once complete...
+    output: 
+        PAPER_METRICS_DENSITY_PLOT,
+        PAPER_METRICS_DENSITY_PLOT_TEST_TABLE
+    script: "scripts/plotting/plot_paper_metrics_density.R"
+
 
 rule table_fit_by_venue:
     input: 

@@ -6,7 +6,8 @@ from dl_helpers import extract_data_to_local_file
 QUERY = """
 WITH papers AS (
   SELECT 
-    PaperId
+    PaperId,
+    Year
   FROM ccnr-success.mag.Papers
   WHERE JournalId IN (
     24807848,
@@ -14,14 +15,17 @@ WITH papers AS (
     137773608,
     125754415
   )
-  AND year >= 2000
+  AND Year >= 2000
   AND DocType = "Journal"
 ),
-refs AS (
+cites AS (
   SELECT
-    r.*
+    r.PaperReferenceId as CitedPaperId,
+    r.PaperId as CitingPaperId
   FROM ccnr-success.mag.PaperReferences r
-  INNER JOIN papers as p on p.PaperId = r.PaperId
+  INNER JOIN papers as p1 on p1.PaperId = r.PaperReferenceId
+  LEFT JOIN ccnr-success.mag.Papers as p2 on p2.PaperId = r.PaperId
+  WHERE (p2.Year - p1.Year) <= 5
 ),
 ref_fields AS (
   SELECT 
@@ -29,24 +33,24 @@ ref_fields AS (
     f.FieldOfStudyId,
     fos.FieldOfStudyId as ParentField
   FROM ccnr-success.mag.PaperFieldsOfStudy f
-  INNER JOIN refs r on r.PaperReferenceId = f.PaperId
+  INNER JOIN cites r on r.CitingPaperId = f.PaperId
   LEFT JOIN ccnr-success.mag.FieldOfStudyChildren fos on fos.ChildFieldOfStudyId = f.FieldOfStudyId
   WHERE f.Score > 0
 )
-SELECT 
-  base.PaperId,
-  base.PaperReferenceId,
+SELECT DISTINCT
+  base.CitedPaperId,
+  base.CitingPaperId,
   base.field
 FROM (
   SELECT 
-    r.PaperId,
-    r.PaperReferenceId,
+    r.CitedPaperId,
+    r.CitingPaperId,
     COALESCE(ParentField, FieldOfStudyId) AS field
   FROM ref_fields r
 ) base
 LEFT JOIN ccnr-success.mag.FieldsOfStudy fos on fos.FieldOfStudyId = field
 WHERE Level = 0
-ORDER BY PaperId, PaperReferenceId
+ORDER BY CitedPaperId, CitingPaperId
 """
 
 client = bigquery.Client()
