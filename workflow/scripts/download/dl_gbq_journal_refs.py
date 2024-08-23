@@ -25,13 +25,34 @@ papers AS (
   AND Doi IS NOT NULL
   AND ReferenceCount >= 5
 ),
+aps_mag_citations AS (
+  -- MAG has poor coverage of APS citations...lets supplement with info from APS
+  SELECT 
+    citing.PaperId as PaperId,
+    cited.PaperId as PaperReferenceId
+  FROM `ccnr-success.aps.citations` aps
+  LEFT JOIN `ccnr-success.mag.Papers` citing on citing.Doi = aps.citing_doi
+  LEFT JOIN `ccnr-success.mag.Papers` cited on cited.Doi = aps.cited_doi
+),
+all_refs AS (
+  SELECT DISTINCT *
+  FROM (
+    SELECT
+      *
+    FROM `ccnr-success.mag.PaperReferences`
+    UNION ALL 
+    SELECT 
+      *
+    FROM aps_mag_citations
+  )
+),
 refs AS (
   select
     p.*,
     r.PaperReferenceId,
     p2.JournalId as ReferenceJournalId,
     p2.Year as ReferenceYear
-  FROM `ccnr-success.mag.PaperReferences` as r
+  FROM all_refs r
   INNER JOIN papers as p ON p.CitingPaperId = r.PaperId
   LEFT JOIN `ccnr-success.mag.Papers` p2 on p2.PaperId = r.PaperReferenceId
   INNER JOIN target_journals j on j.JournalId = p2.JournalId
