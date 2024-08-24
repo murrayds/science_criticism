@@ -50,3 +50,31 @@ load_aggregate_df <- function(letter_path, nonletter_path) {
 
   return(df)
 }
+
+perform_matching <- function(df, cite_tolerance, year_tolerance) {
+  # This function encapsulates the logic of performing the matching using
+  # R's `MatchIt` package.
+
+  # allow some flexibility on year, but focus on impact norm...
+  formula <- treat ~ year + impact_norm
+
+  # Must have exact match on field and venue...
+  exact_formula <- ~ field + quarter + venue + multifield
+
+  # Perform the matching
+  match <- matchit(
+    formula,
+    data = df,
+    method = "nearest",
+    exact = exact_formula,
+    caliper = c(
+      impact_norm = cite_tolerance, # allow 5% variance in log-scaled citations
+      year = year_tolerance # allow 3 years flexibility in matching year...
+    ),
+    ratio = 1, # 1 nearest match for each record
+    discard = "both" # remove instances where a match could not be found
+  )
+
+  # Extract the matched dataset
+  return(match.data(match))
+}

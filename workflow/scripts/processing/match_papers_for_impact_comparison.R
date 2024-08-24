@@ -108,40 +108,15 @@ prepare_df_for_matching <- function(x, letters, articles, fields) {
   return(df_prepared)
 }
 
-
-perform_matching <- function(df) {
-  # This function encapsulates the logic of performing the matching using
-  # R's `MatchIt` package.
-
-  # allow some flexibility on year, but focus on impact norm...
-  formula <- treat ~ year + impact_norm
-
-  # Must have exact match on field and venue...
-  exact_formula <- ~ field + quarter + venue + multifield
-
-  # Perform the matching
-  match <- matchit(
-    formula,
-    data = df,
-    method = "nearest",
-    exact = exact_formula,
-    caliper = c(
-      impact_norm = cite_tolerance, # allow 5% variance in log-scaled citations
-      year = year_tolerance # allow 3 years flexibility in matching year...
-    ),
-    ratio = 1, # 1 nearest match for each record
-    discard = "both" # remove instances where a match could not be found
-  )
-
-  # Extract the matched dataset
-  return(match.data(match))
-}
-
 # For values of `lag` between 1 and 10, prepare the data frame
 # and perform the matching`
 df_matched_list <- lapply(c(0:6), function(x) {
   prepared_df_part <- prepare_df_for_matching(x, letters, articles, fields)
-  matched_df_part <- perform_matching(prepared_df_part)
+  matched_df_part <- perform_matching(
+    prepared_df_part,
+    cite_tolerance = cite_tolerance,
+    year_tolerance = year_tolerance
+  )
   return(matched_df_part)
 })
 
