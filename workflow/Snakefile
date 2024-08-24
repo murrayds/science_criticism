@@ -36,6 +36,7 @@ AGG_NOVELTY_ZSCORES = j(DERIVED_DIR, "novelty", "agg_journal_zscores.pickle")
 PAPER_NOVELTY_SCORES = j(DERIVED_DIR, "novelty", "paper_zscores.csv")
 
 
+MATCHED_PAPERS_FOR_METRIC_DENSITY_COMPARISON = j(DERIVED_DIR, "matched", "matched_papers_metricdensity_{cite_tolerance}impact_{year_tolerance}year.csv")
 MATCHED_PAPERS_FOR_IMPACT_COMPARISON = j(DERIVED_DIR, "matched", "matched_papers_stage1_{delay}delay_{cite_tolerance}impact_{year_tolerance}year.csv")
 AGG_MATCH_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_match_diagnostics.csv")
 
@@ -43,7 +44,8 @@ IMPACT_RANK_HISTOGRAM = j(FIG_DIR, "impact_rank_histogram.png")
 IMPACT_LIKELIHOOD_SCATTER = j(FIG_DIR, "impact_likelihood_scatter.png")
 
 PAPER_METRICS_DENSITY_PLOT = j(FIG_DIR, "paper_metrics_density.png")
-PAPER_METRICS_DENSITY_PLOT_TEST_TABLE = j(FIG_DIR, "tables", "paper_metrics_density_test_table.txt")
+PAPER_METRICS_DENSITY_PLOT_TEST_1SAMPLE_TABLE = j(FIG_DIR, "tables", "paper_metrics_density_test_1sample_table.txt")
+PAPER_METRICS_DENSITY_PLOT_TEST_2SAMPLE_TABLE = j(FIG_DIR, "tables", "paper_metrics_density_test_2sample_table.txt")
 
 FIT_BY_VENUE_TABLE = j(FIG_DIR, "tables", "fit_by_venue.txt")
 
@@ -85,14 +87,20 @@ rule all:
         PAPER_FIELD_CITES,
         IMPACT_RANK_HISTOGRAM,
         IMPACT_LIKELIHOOD_SCATTER,
-        PAPER_METRICS_DENSITY_PLOT,
-        PAPER_METRICS_DENSITY_PLOT_TEST_TABLE,
         expand(
             MATCHED_PAPERS_FOR_IMPACT_COMPARISON,
             delay = IMPACT_DELAY,
             cite_tolerance = CITE_TOLERANCE,
             year_tolerance = YEAR_TOLERANCE
         ),
+        expand(
+            MATCHED_PAPERS_FOR_METRIC_DENSITY_COMPARISON,
+            cite_tolerance = 0.05,
+            year_tolerance = 3,
+        ),
+        PAPER_METRICS_DENSITY_PLOT,
+        PAPER_METRICS_DENSITY_PLOT_TEST_1SAMPLE_TABLE,
+        PAPER_METRICS_DENSITY_PLOT_TEST_2SAMPLE_TABLE,
         expand(POOLED_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
         expand(PAIRWISE_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
         FIT_BY_VENUE_TABLE,
@@ -103,6 +111,7 @@ rule all:
 
 rule dl_gbq_journal_refs:
     output: JOURNAL_REFS
+    threads: workflow.cores * 0.5
     script: "scripts/download/dl_gbq_journal_refs.py"
 
 rule dl_gbq_target_journal_refs:
@@ -185,6 +194,14 @@ rule calculate_paper_novelty:
         year_max = max(YEARS_OF_STUDY)
     script: "scripts/processing/calculate_paper_novelty.py"
 
+rule match_papers_for_metric_density_comparison:
+    input: 
+        rules.agg_letters.output,
+        rules.agg_nonletters.output,
+        rules.agg_fields.output
+    output: MATCHED_PAPERS_FOR_METRIC_DENSITY_COMPARISON
+    script: "scripts/processing/match_papers_for_metric_density_comparison.R"
+
 rule match_papers_for_impact_comparison:
     input:
         rules.agg_letters.output,
@@ -215,10 +232,16 @@ rule plot_paper_metrics_density:
         rules.agg_fields.output,
         rules.dl_gbq_paper_field_refs.output,
         rules.dl_gbq_paper_field_cites.output,
-        PAPER_FEATURES # TODO: Replace with novelty once complete...
+        PAPER_FEATURES, # TODO: Replace with novelty once complete...
+        expand(
+            rules.match_papers_for_metric_density_comparison.output,
+            cite_tolerance = 0.05,
+            year_tolerance = 3
+        )
     output: 
         PAPER_METRICS_DENSITY_PLOT,
-        PAPER_METRICS_DENSITY_PLOT_TEST_TABLE
+        PAPER_METRICS_DENSITY_PLOT_TEST_1SAMPLE_TABLE,
+        PAPER_METRICS_DENSITY_PLOT_TEST_2SAMPLE_TABLE
     script: "scripts/plotting/plot_paper_metrics_density.R"
 
 
