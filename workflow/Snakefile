@@ -55,6 +55,7 @@ FIT_BY_VENUE_TABLE = j(FIG_DIR, "tables", "fit_by_venue.txt")
 POOLED_IMPACT_COMPARISON_PLOT = j(FIG_DIR, "pooled_{lag_subset}_impact_comparison_plot.png")
 PAIRWISE_IMPACT_COMPARISON_PLOT = j(FIG_DIR, "pairwise_{lag_subset}_impact_comparison_plot.png")
 
+PAIRWISE_AUTHOR_COMPARISON_PLOT = j(FIG_DIR, "pairwise_author_comparison_{metric}_{authorship}-authors.png")
 FIELD_REPRESENTATION_PLOT = j(FIG_DIR, "field_representation_plot.png")
 
 MATCHING_DIAGNOSTIC_IMPACT_PLOT = j(FIG_DIR, "diagnostics", "matching_diagnostic_impact_plot.png")
@@ -79,6 +80,7 @@ NULL_ITERS = list(range(0,5))
 
 
 AUTHORSHIP = ["first", "last"]
+AUTHOR_METRICS = ["frac_prod", "impact_raw"]
 
 rule all:
     input:
@@ -120,7 +122,12 @@ rule all:
         AGG_MATCH_DIAGNOSTICS,
         expand(MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS),
         MATCHING_DIAGNOSTIC_IMPACT_PLOT,
-        FIELD_REPRESENTATION_PLOT
+        FIELD_REPRESENTATION_PLOT,
+        expand(
+            PAIRWISE_AUTHOR_COMPARISON_PLOT,
+            metric = AUTHOR_METRICS,
+            authorship = AUTHORSHIP
+        )
 
 rule dl_gbq_journal_refs:
     output: JOURNAL_REFS
@@ -327,3 +334,16 @@ rule plot_field_representation:
         rules.agg_fields.output
     output: FIELD_REPRESENTATION_PLOT
     script: "scripts/plotting/plot_field_representation.R"
+
+
+rule plot_author_comparison:
+    input: lambda wc: 
+        expand(
+            rules.match_authors.output,
+            cite_tolerance = 0.15,
+            prod_tolerance = 1.0,
+            authorship = wc.authorship,
+            metric = wc.metric
+        )
+    output: PAIRWISE_AUTHOR_COMPARISON_PLOT
+    script: "scripts/plotting/plot_matched_author_comparison.R"
