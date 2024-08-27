@@ -86,6 +86,6 @@ p <- plotdata %>%
     legend.position.inside = c(0.25, 0.75)
   ) +
   ylab("r(k)") +
-  xlab("2-year citation impact")
+  xlab("3-year citation impact")
 
 ggsave(p, filename = snakemake@output[[1]], width = 4, height = 4, bg = "white")
