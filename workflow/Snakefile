@@ -21,6 +21,7 @@ JOURNAL_REFS = j(RAW_DIR, "dl", "journal_refs_{year}.csv")
 TARGET_JOURNAL_REFS = j(RAW_DIR, "dl", "target_journal_refs.csv")
 PAPER_FIELD_REFS = j(RAW_DIR, "dl", "paper_field_refs.csv")
 PAPER_FIELD_CITES = j(RAW_DIR, "dl", "paper_field_cites.csv")
+CAREER_HISTORIES = j(RAW_DIR, "dl", "career_histories.csv")
 
 AGG_LETTERS = j(DERIVED_DIR, "agg", "agg_letters.csv")
 AGG_NONLETTERS = j(DERIVED_DIR, "agg", "agg_nonletters.csv")
@@ -39,6 +40,8 @@ PAPER_NOVELTY_SCORES = j(DERIVED_DIR, "novelty", "paper_zscores.csv")
 MATCHED_PAPERS_FOR_METRIC_DENSITY_COMPARISON = j(DERIVED_DIR, "matched", "matched_papers_metricdensity_{cite_tolerance}impact_{year_tolerance}year.csv")
 MATCHED_PAPERS_FOR_IMPACT_COMPARISON = j(DERIVED_DIR, "matched", "matched_papers_stage1_{delay}delay_{cite_tolerance}impact_{year_tolerance}year.csv")
 AGG_MATCH_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_match_diagnostics.csv")
+MATCHED_AUTHORS = j(DERIVED_DIR, "matched", "matched_{authorship}_authors_{cite_tolerance}impact_{prod_tolerance}prod.csv")
+
 
 IMPACT_RANK_HISTOGRAM = j(FIG_DIR, "impact_rank_histogram.png")
 IMPACT_LIKELIHOOD_SCATTER = j(FIG_DIR, "impact_likelihood_scatter.png")
@@ -66,6 +69,7 @@ VENUES = ["Nature", "Science", "PNAS", "PRL"]
 IMPACT_DELAY = [2, 3, 4]
 CITE_TOLERANCE = [0.05, 0.1, 0.15]
 YEAR_TOLERANCE = [1, 2, 3]
+PRODUCTIVITY_TOLERANCE = [0.05, 0.1, 0.15]
 
 LAG_SUBSET = ["all", "lag0", "lag1plus"]
 DIAGNOSTICS = ["counts", "tstats", "wilcox"]
@@ -73,6 +77,8 @@ DIAGNOSTICS = ["counts", "tstats", "wilcox"]
 YEARS_OF_STUDY = list(range(2000, 2004))
 NULL_ITERS = list(range(0,5))
 
+
+AUTHORSHIP = ["first", "last"]
 
 rule all:
     input:
@@ -85,6 +91,7 @@ rule all:
         PAPER_NOVELTY_SCORES,
         PAPER_FIELD_REFS,
         PAPER_FIELD_CITES,
+        CAREER_HISTORIES,
         IMPACT_RANK_HISTOGRAM,
         IMPACT_LIKELIHOOD_SCATTER,
         expand(
@@ -97,6 +104,12 @@ rule all:
             MATCHED_PAPERS_FOR_METRIC_DENSITY_COMPARISON,
             cite_tolerance = 0.05,
             year_tolerance = 3,
+        ),
+        expand(
+            MATCHED_AUTHORS,
+            authorship = AUTHORSHIP,
+            cite_tolerance = 0.15,
+            prod_tolerance = 1.0
         ),
         PAPER_METRICS_DENSITY_PLOT,
         PAPER_METRICS_DENSITY_PLOT_TEST_1SAMPLE_TABLE,
@@ -125,6 +138,10 @@ rule dl_gbq_paper_field_refs:
 rule dl_gbq_paper_field_cites:
     output: PAPER_FIELD_CITES
     script: "scripts/download/dl_gbq_paper_field_cites.py"
+
+rule dl_gbq_career_histories:
+    output: CAREER_HISTORIES
+    script: "scripts/download/dl_gbq_career_histories.py"
 
 rule count_journal_cooccurence_observed:
     input: rules.dl_gbq_journal_refs.output
@@ -209,6 +226,14 @@ rule match_papers_for_impact_comparison:
         rules.agg_fields.output
     output: MATCHED_PAPERS_FOR_IMPACT_COMPARISON
     script: "scripts/processing/match_papers_for_impact_comparison.R"
+
+rule match_authors:
+    input:
+        rules.agg_letters.output,
+        rules.agg_nonletters.output,
+        rules.dl_gbq_career_histories.output
+    output: MATCHED_AUTHORS
+    script: "scripts/processing/match_authors.R"
 
 rule plot_impact_rank_histogram:
     input:
