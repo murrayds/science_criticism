@@ -111,7 +111,7 @@ rule all:
             MATCHED_AUTHORS,
             authorship = AUTHORSHIP,
             cite_tolerance = 0.15,
-            prod_tolerance = 1.0
+            prod_tolerance = 0.15
         ),
         PAPER_METRICS_DENSITY_PLOT,
         PAPER_METRICS_DENSITY_PLOT_TEST_1SAMPLE_TABLE,

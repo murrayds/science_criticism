@@ -124,7 +124,9 @@ df_matched_parts <- lapply(venues, function(event_venue) {
       ungroup() %>%
       filter(total_prod > kMinProductivity) %>%
       mutate(
-        impact_norm = impact / mean(impact, na.rm = TRUE),
+        impact_norm = log(impact / mean(impact, na.rm = TRUE)),
+        prod_norm = log(frac_prod / mean(frac_prod, na.rm = TRUE)),
+        lead_prod_norm = log(lead_prod / mean(lead_prod, na.rm = TRUE)),
         field = factor(field),
       ) %>%
       filter(
@@ -138,7 +140,7 @@ df_matched_parts <- lapply(venues, function(event_venue) {
 
 
     # allow some flexibility on year, but focus on impact norm...
-    formula <- treat ~ frac_prod + lead_prod + impact_norm + field + career_age
+    formula <- treat ~ prod_norm + lead_prod_norm + impact_norm + field + career_age
 
     # Perform the matching
     match_result <- tryCatch({
@@ -149,7 +151,7 @@ df_matched_parts <- lapply(venues, function(event_venue) {
         caliper = c(
           impact_norm = cite_tolerance,
           frac_prod = prod_tolerance,
-          lead_prod = 1.0
+          lead_prod = 0.1
         ),
         ratio = 1, # 1 nearest match for each record
         discard = "both" # remove instances where a match could not be found
