@@ -84,7 +84,7 @@ AUTHOR_METRICS = ["frac_prod", "impact_raw"]
 
 rule all:
     input:
-        expand(PAPER_IMPACT, venue = "VENUES"),
+        expand(PAPER_IMPACT, venue = VENUES),
         expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
         TARGET_JOURNAL_REFS,
         expand(OBSERVED_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY),
