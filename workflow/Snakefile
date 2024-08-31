@@ -9,7 +9,7 @@ DERIVED_DIR = j(config["data_dir"], "derived")
 FIG_DIR = j(config["fig_dir"], "figs")
 
 LETTER_METADATA = j(RAW_DIR, "{venue}_letter_metadata.csv")
-PAPER_IMPACT = j(RAW_DIR, "{venue}_paper_impact.csv")
+PAPER_IMPACT = j(RAW_DIR, "dl", "{venue}_paper_impact.csv")
 PAPER_FIELDS = j(RAW_DIR, "{venue}_fields.csv")
 PAPER_RETRACTIONS = j(RAW_DIR, "{venue}_retractions.csv")
 FIELD_HIERARCHY = j(RAW_DIR, "mag_field_hierarchy.csv")
@@ -75,8 +75,8 @@ PRODUCTIVITY_TOLERANCE = [0.05, 0.1, 0.15]
 LAG_SUBSET = ["all", "lag0", "lag1plus"]
 DIAGNOSTICS = ["counts", "tstats", "wilcox"]
 
-YEARS_OF_STUDY = list(range(2000, 2004))
-NULL_ITERS = list(range(0,5))
+YEARS_OF_STUDY = list(range(2000, 2002))
+NULL_ITERS = list(range(0,1))
 
 
 AUTHORSHIP = ["first", "last"]
@@ -84,6 +84,7 @@ AUTHOR_METRICS = ["frac_prod", "impact_raw"]
 
 rule all:
     input:
+        expand(PAPER_IMPACT, venue = "VENUES"),
         expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
         TARGET_JOURNAL_REFS,
         expand(OBSERVED_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY),
@@ -129,6 +130,11 @@ rule all:
             authorship = AUTHORSHIP
         )
 
+rule dl_gbq_paper_impact:
+    output: PAPER_IMPACT,
+    threads: workflow.cores * 0.5
+    script: "scripts/download/dl_gbq_paper_impact.py"
+
 rule dl_gbq_journal_refs:
     output: JOURNAL_REFS
     threads: workflow.cores * 0.5
@@ -151,33 +157,37 @@ rule dl_gbq_career_histories:
     script: "scripts/download/dl_gbq_career_histories.py"
 
 rule count_journal_cooccurence_observed:
-    input: rules.dl_gbq_journal_refs.output
+    input: ancient(rules.dl_gbq_journal_refs.output)
     output: OBSERVED_JOURNAL_COOCCURENCE_COUNTS
     params: shuffle = False
     script: "scripts/processing/count_journal_cooccurence.py"
 
 rule count_journal_cooccurence_null:
-    input: rules.dl_gbq_journal_refs.output
+    input: ancient(rules.dl_gbq_journal_refs.output)
     output: NULL_JOURNAL_COOCCURENCE_COUNTS
     params: shuffle = True
     script: "scripts/processing/count_journal_cooccurence.py"
 
 rule calculate_novelty_zscores:
     input: 
-        observed = rules.count_journal_cooccurence_observed.output,
-        null = lambda wc: collect(
+        observed = ancient(rules.count_journal_cooccurence_observed.output),
+        null = ancient(
+                lambda wc: collect(
                     rules.count_journal_cooccurence_null.output,
                     iter = NULL_ITERS,
                     year = wc.year
                 )
+            )
     output: NOVELTY_ZSCORES
     script: "scripts/processing/calculate_novelty_zscores.py"
 
 rule agg_novelty_zscores:
     input:
-        expand(
-            rules.calculate_novelty_zscores.output, 
-            year = YEARS_OF_STUDY
+        ancient(
+            expand(
+                rules.calculate_novelty_zscores.output, 
+                year = YEARS_OF_STUDY
+            )
         )
     output: AGG_NOVELTY_ZSCORES
     script: "scripts/processing/agg_novelty_zscores.py"
@@ -185,7 +195,7 @@ rule agg_novelty_zscores:
 rule agg_letters:
     input:
         letters=expand(LETTER_METADATA, venue=VENUES),
-        impacts=expand(PAPER_IMPACT, venue=VENUES),
+        impacts=expand(rules.dl_gbq_paper_impact.output, venue=VENUES),
         month=MONTH_OF_PUBLICATION
     output: AGG_LETTERS
     script: "scripts/processing/agg_letters.py"
@@ -193,7 +203,7 @@ rule agg_letters:
 rule agg_nonletters:
     input: 
         letters=expand(LETTER_METADATA, venue=VENUES),
-        impacts=expand(PAPER_IMPACT, venue=VENUES),
+        impacts=expand(rules.dl_gbq_paper_impact.output, venue=VENUES),
         retractions=expand(PAPER_RETRACTIONS, venue=VENUES),
         month=MONTH_OF_PUBLICATION
     output: AGG_NONLETTERS
@@ -208,7 +218,7 @@ rule agg_fields:
 
 rule calculate_paper_novelty:
     input: 
-        zscores = rules.agg_novelty_zscores.output,
+        zscores = ancient(rules.agg_novelty_zscores.output),
         letters = rules.agg_letters.output,
         nonletters = rules.agg_nonletters.output,
         refs = rules.dl_gbq_target_journal_refs.output
