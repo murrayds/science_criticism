@@ -1,2 +1,8 @@
 # set the directories below and copy this file as `config.yaml`
 data_dir: "../data/"
+fig_dir: "../figs/"
+venues:
+  "Nature": 137773608
+  "Science": 3880285
+  "PNAS": 125754415
+  "PRL": 24807848
