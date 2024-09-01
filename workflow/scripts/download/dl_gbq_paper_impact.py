@@ -4,7 +4,7 @@ It executes a query that calculates the impact of papers over different time per
 """
 from google.cloud import bigquery
 
-from dl_helpers import extract_data_to_local_file 
+from dl_helpers import extract_data_to_local_file, gen_random_sequence
 
 venue = snakemake.config["venues"][snakemake.wildcards.venue]
 
@@ -13,7 +13,7 @@ SELECT
   cited.PaperId as id,
   ANY_VALUE(cited.Year) as year,
   ANY_VALUE(cited.ReferenceCount) as ReferenceCount,
-  {venue} as venue,
+  "{snakemake.wildcards.venue}" as venue,
   SUM(IF((citing.Year - cited.Year) <= 1, 1, 0)) AS impact_1year,
   SUM(IF((citing.Year - cited.Year) <= 2, 1, 0)) AS impact_2year,
   SUM(IF((citing.Year - cited.Year) <= 3, 1, 0)) AS impact_3year,
@@ -36,14 +36,16 @@ WHERE
   cited.JournalId = {venue}
   AND citing.DocType = "Journal"
   AND cited.DocType = "Journal"
-  AND cited.Year >= 1980
+  AND cited.Year >= 2000
+  AND cited.DocSubTypes = ""
 GROUP BY cited.PaperId
 """
 
 client = bigquery.Client()
 
 # Execute the query
-TEMP_TABLE_REF = "ccnr-success.dmurray.temp_journal_paper_refs"
+random_seq = gen_random_sequence()
+TEMP_TABLE_REF = f"ccnr-success.dmurray.temp_{random_seq}"
 
 # Set up the query job configuration
 job_config = bigquery.QueryJobConfig(
@@ -59,10 +61,10 @@ query_job.result()  # Wait for the query to complete
 result = extract_data_to_local_file(
     table = TEMP_TABLE_REF,
     local_filename = snakemake.output[0],
-    client = client
+    client = client,
+    random_seq = random_seq
 ) 
 
 # Delete the temporary GBQ tables...
-client = bigquery.Client()
 client.delete_table(TEMP_TABLE_REF, not_found_ok=True)
 print(f"Table '{TEMP_TABLE_REF}' deleted.")

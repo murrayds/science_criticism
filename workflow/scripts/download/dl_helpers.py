@@ -11,18 +11,25 @@ from google.api_core.exceptions import NotFound
 from google.cloud import storage
 from concurrent.futures import ThreadPoolExecutor
 
+
+def gen_random_sequence():
+    return(''.join(random.choices(string.ascii_letters + string.digits, k=16)))
+
 def extract_data_to_local_file(
         table,
         local_filename,
         client = None,
         temp_bucket = "dmurray_temp",
+        random_seq = None
     ):
 
     if client is None:
       client = bigquery.Client()
     
     # Generate a temporary filename to hold the table...
-    random_seq = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+    if random_seq == None:
+        random_seq = gen_random_sequence()
+    
     gcloud_tempfilename = f"temp_{random_seq}_*.csv.gz"
 
     destination_uri = "gs://{}/{}".format(temp_bucket, gcloud_tempfilename)

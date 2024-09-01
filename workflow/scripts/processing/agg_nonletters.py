@@ -5,10 +5,6 @@ for index in range(len(snakemake.input.letters)):
     # load the data
     letters = pd.read_csv(snakemake.input.letters[index])
     articles = pd.read_csv(snakemake.input.impacts[index])
-    retractions = pd.read_csv(snakemake.input.retractions[index])
-
-    # filter out the retracted papers, they may confound our analysis
-    articles = articles[~articles.id.isin(retractions.id)]
 
     # Filter to those within the specified year
     articles = articles[articles.year < 2020]

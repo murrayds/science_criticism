@@ -1,22 +1,20 @@
 # Check if the table exists
 from google.cloud import bigquery
 
-from dl_helpers import extract_data_to_local_file 
+from dl_helpers import extract_data_to_local_file, gen_random_sequence
 
-QUERY = """
+QUERY = f"""
 WITH papers AS (
   SELECT 
     PaperId,
     Year
   FROM ccnr-success.mag.Papers
   WHERE JournalId IN (
-    24807848,
-    3880285,
-    137773608,
-    125754415
+    {",".join(map(str, snakemake.config["venues"].values()))}
   )
   AND Year >= 2000
   AND DocType = "Journal"
+  AND DocSubTypes = ""
 ),
 aps_mag_citations AS (
   -- MAG has poor coverage of APS citations...lets supplement with info from APS
@@ -77,7 +75,8 @@ ORDER BY CitedPaperId, CitingPaperId
 client = bigquery.Client()
 
 # Execute the query
-TEMP_TABLE_REF = "ccnr-success.dmurray.temp_journal_paper_refs"
+random_seq = gen_random_sequence()
+TEMP_TABLE_REF = f"ccnr-success.dmurray.temp_{random_seq}"
 
 # Set up the query job configuration
 job_config = bigquery.QueryJobConfig(
@@ -97,6 +96,5 @@ result = extract_data_to_local_file(
 ) 
 
 # Delete the temporary GBQ tables...
-client = bigquery.Client()
 client.delete_table(TEMP_TABLE_REF, not_found_ok=True)
 print(f"Table '{TEMP_TABLE_REF}' deleted.")

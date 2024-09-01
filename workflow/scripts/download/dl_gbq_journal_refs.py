@@ -1,7 +1,7 @@
 from google.cloud import bigquery
 from google.api_core.exceptions import NotFound
 
-from dl_helpers import extract_data_to_local_file 
+from dl_helpers import extract_data_to_local_file, gen_random_sequence
 
 # Retreive the year wildcard passed into the file
 YEAR = int(snakemake.wildcards.year)
@@ -24,6 +24,7 @@ papers AS (
   WHERE DocType = "Journal"
   AND Doi IS NOT NULL
   AND ReferenceCount >= 5
+  AND DocSubTypes = ""
 ),
 aps_mag_citations AS (
   -- MAG has poor coverage of APS citations...lets supplement with info from APS
@@ -106,7 +107,9 @@ WHERE CitingPaperYear = {YEAR}
 
 # Execute the query
 query_job = client.query(SELECT_YEAR_QUERY)
-SELECTED_TABLE_REF = f"ccnr-success.dmurray.selected_refs_{YEAR}"
+
+random_seq = gen_random_sequence()
+SELECTED_TABLE_REF = f"ccnr-success.dmurray.temp_{random_seq}"
 
 # Set up the query job configuration
 job_config = bigquery.QueryJobConfig(
@@ -128,7 +131,6 @@ result = extract_data_to_local_file(
 
 
 # Delete the temporary GBQ tables...
-client = bigquery.Client()
 client.delete_table(SELECTED_TABLE_REF, not_found_ok=True)
 print(f"Table '{SELECTED_TABLE_REF}' deleted.")
 
