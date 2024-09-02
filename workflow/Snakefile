@@ -1,17 +1,20 @@
 from os.path import join as j
 
+from workflow_helpers import get_novelty_null_iters, get_novelty_years, get_venues
+
 # Use a config file
 configfile: "config.yaml"
 
+SCRIPTS = ""
+
+
 RAW_DIR = j(config["data_dir"], "raw")
 DERIVED_DIR = j(config["data_dir"], "derived")
-
 FIG_DIR = j(config["fig_dir"], "figs")
 
 LETTER_METADATA = j(RAW_DIR, "{venue}_letter_metadata.csv")
-PAPER_IMPACT = j(RAW_DIR, "dl", "{venue}_paper_impact.csv")
-PAPER_FIELDS = j(RAW_DIR, "{venue}_fields.csv")
-PAPER_RETRACTIONS = j(RAW_DIR, "{venue}_retractions.csv")
+PAPER_IMPACT = j(RAW_DIR, "dl", "articles", "{venue}_paper_impact.csv")
+PAPER_FIELDS = j(RAW_DIR, "dl", "articles", "{venue}_fields.csv")
 FIELD_HIERARCHY = j(RAW_DIR, "mag_field_hierarchy.csv")
 PAPER_FEATURES = j(RAW_DIR, "paper_features.csv")
 #TODO Later this should be integrated in files at query-time
@@ -62,21 +65,30 @@ MATCHING_DIAGNOSTIC_IMPACT_PLOT = j(FIG_DIR, "diagnostics", "matching_diagnostic
 MATCH_DIAGNOSTICS_TABLE = j(FIG_DIR, "tables", "match_{diagnostic}_parameters.txt")
 
 ####################
+# INCLUDES
+####################
+include: "rules/Download.smk"
+include: "rules/Novelty.smk"
+include: "rules/Process.smk"
+include: "rules/Match.smk"
+include: "rules/Results.smk"
+
+####################
 # PARAMETERS
 ####################
-VENUES = ["Nature", "Science", "PNAS", "PRL"]
+VENUES = get_venues(config)
 
 # Maybe I can store these in a config file instead...?
-IMPACT_DELAY = [2, 3, 4]
-CITE_TOLERANCE = [0.05, 0.1, 0.15]
-YEAR_TOLERANCE = [1, 2, 3]
-PRODUCTIVITY_TOLERANCE = [0.05, 0.1, 0.15]
+IMPACT_DELAY = config["matching"]["impact_delay"]
+CITE_TOLERANCE = config["matching"]["cite_tolerance"]
+YEAR_TOLERANCE = config["matching"]["year_tolerance"]
+PRODUCTIVITY_TOLERANCE = config["matching"]["productivity_tolerance"]
 
 LAG_SUBSET = ["all", "lag0", "lag1plus"]
 DIAGNOSTICS = ["counts", "tstats", "wilcox"]
 
-YEARS_OF_STUDY = list(range(2000, 2002))
-NULL_ITERS = list(range(0,1))
+YEARS_OF_STUDY = get_novelty_years(config)
+NULL_ITERS = get_novelty_null_iters(config)
 
 
 AUTHORSHIP = ["first", "last"]
@@ -85,6 +97,7 @@ AUTHOR_METRICS = ["frac_prod", "impact_raw"]
 rule all:
     input:
         expand(PAPER_IMPACT, venue = VENUES),
+        expand(PAPER_FIELDS, venue = VENUES),
         expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
         TARGET_JOURNAL_REFS,
         expand(OBSERVED_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY),
@@ -130,230 +143,60 @@ rule all:
             authorship = AUTHORSHIP
         )
 
-rule dl_gbq_paper_impact:
-    output: PAPER_IMPACT,
-    threads: workflow.cores * 0.5
-    script: "scripts/download/dl_gbq_paper_impact.py"
-
-rule dl_gbq_journal_refs:
-    output: JOURNAL_REFS
-    threads: workflow.cores * 0.5
-    script: "scripts/download/dl_gbq_journal_refs.py"
-
-rule dl_gbq_target_journal_refs:
-    output: TARGET_JOURNAL_REFS
-    script: "scripts/download/dl_gbq_target_journal_refs.py"
-
-rule dl_gbq_paper_field_refs:
-    output: PAPER_FIELD_REFS
-    script: "scripts/download/dl_gbq_paper_field_refs.py"
-
-rule dl_gbq_paper_field_cites:
-    output: PAPER_FIELD_CITES
-    script: "scripts/download/dl_gbq_paper_field_cites.py"
-
-rule dl_gbq_career_histories:
-    output: CAREER_HISTORIES
-    script: "scripts/download/dl_gbq_career_histories.py"
-
-rule count_journal_cooccurence_observed:
-    input: ancient(rules.dl_gbq_journal_refs.output)
-    output: OBSERVED_JOURNAL_COOCCURENCE_COUNTS
-    params: shuffle = False
-    script: "scripts/processing/count_journal_cooccurence.py"
-
-rule count_journal_cooccurence_null:
-    input: ancient(rules.dl_gbq_journal_refs.output)
-    output: NULL_JOURNAL_COOCCURENCE_COUNTS
-    params: shuffle = True
-    script: "scripts/processing/count_journal_cooccurence.py"
-
-rule calculate_novelty_zscores:
-    input: 
-        observed = ancient(rules.count_journal_cooccurence_observed.output),
-        null = ancient(
-                lambda wc: collect(
-                    rules.count_journal_cooccurence_null.output,
-                    iter = NULL_ITERS,
-                    year = wc.year
-                )
-            )
-    output: NOVELTY_ZSCORES
-    script: "scripts/processing/calculate_novelty_zscores.py"
-
-rule agg_novelty_zscores:
+rule download:
     input:
-        ancient(
-            expand(
-                rules.calculate_novelty_zscores.output, 
-                year = YEARS_OF_STUDY
-            )
-        )
-    output: AGG_NOVELTY_ZSCORES
-    script: "scripts/processing/agg_novelty_zscores.py"
+        expand(PAPER_IMPACT, venue = VENUES),
+        expand(PAPER_FIELDS, venue = VENUES),
+        expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
+        TARGET_JOURNAL_REFS,
+        CAREER_HISTORIES,
+        PAPER_FIELD_REFS,
+        PAPER_FIELD_CITES
 
-rule agg_letters:
+rule novelty:
     input:
-        letters=expand(LETTER_METADATA, venue=VENUES),
-        impacts=expand(rules.dl_gbq_paper_impact.output, venue=VENUES),
-        month=MONTH_OF_PUBLICATION
-    output: AGG_LETTERS
-    script: "scripts/processing/agg_letters.py"
+        expand(OBSERVED_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY),
+        expand(NULL_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY, iter=NULL_ITERS),
+        expand(NOVELTY_ZSCORES, year = YEARS_OF_STUDY),
+        AGG_NOVELTY_ZSCORES,
+        PAPER_NOVELTY_SCORES
 
-rule agg_nonletters:
-    input: 
-        letters=expand(LETTER_METADATA, venue=VENUES),
-        impacts=expand(rules.dl_gbq_paper_impact.output, venue=VENUES),
-        retractions=expand(PAPER_RETRACTIONS, venue=VENUES),
-        month=MONTH_OF_PUBLICATION
-    output: AGG_NONLETTERS
-    script: "scripts/processing/agg_nonletters.py"
-        
-rule agg_fields:
+rule match:
     input:
-        fields = expand(PAPER_FIELDS, venue=VENUES),
-    params: FIELD_HIERARCHY
-    output: AGG_FIELDS
-    script: "scripts/processing/agg_fields.py"
-
-rule calculate_paper_novelty:
-    input: 
-        zscores = ancient(rules.agg_novelty_zscores.output),
-        letters = rules.agg_letters.output,
-        nonletters = rules.agg_nonletters.output,
-        refs = rules.dl_gbq_target_journal_refs.output
-    output: PAPER_NOVELTY_SCORES
-    params: 
-        year_min = min(YEARS_OF_STUDY),
-        year_max = max(YEARS_OF_STUDY)
-    script: "scripts/processing/calculate_paper_novelty.py"
-
-rule match_papers_for_metric_density_comparison:
-    input: 
-        rules.agg_letters.output,
-        rules.agg_nonletters.output,
-        rules.agg_fields.output
-    output: MATCHED_PAPERS_FOR_METRIC_DENSITY_COMPARISON
-    script: "scripts/processing/match_papers_for_metric_density_comparison.R"
-
-rule match_papers_for_impact_comparison:
-    input:
-        rules.agg_letters.output,
-        rules.agg_nonletters.output,
-        rules.agg_fields.output
-    output: MATCHED_PAPERS_FOR_IMPACT_COMPARISON
-    script: "scripts/processing/match_papers_for_impact_comparison.R"
-
-rule match_authors:
-    input:
-        rules.agg_letters.output,
-        rules.agg_nonletters.output,
-        rules.dl_gbq_career_histories.output
-    output: MATCHED_AUTHORS
-    script: "scripts/processing/match_authors.R"
-
-rule plot_impact_rank_histogram:
-    input:
-        rules.agg_letters.output,
-        rules.agg_nonletters.output,
-        rules.agg_fields.output
-    output: IMPACT_RANK_HISTOGRAM
-    script: "scripts/plotting/plot_impact_rank_histogram.R"
-
-rule plot_impact_likelihood_scatter:
-    input:
-        rules.agg_letters.output,
-        rules.agg_nonletters.output
-    output: IMPACT_LIKELIHOOD_SCATTER
-    script: "scripts/plotting/plot_impact_likelihood_scatter.R"
-
-rule plot_paper_metrics_density:
-    input: 
-        rules.agg_letters.output,
-        rules.agg_nonletters.output,
-        rules.agg_fields.output,
-        rules.dl_gbq_paper_field_refs.output,
-        rules.dl_gbq_paper_field_cites.output,
-        PAPER_FEATURES, # TODO: Replace with novelty once complete...
         expand(
-            rules.match_papers_for_metric_density_comparison.output,
+            MATCHED_PAPERS_FOR_IMPACT_COMPARISON,
+            delay = config["matching"]["impact_delay"],
+            cite_tolerance = config["matching"]["cite_tolerance"],
+            year_tolerance = YEAR_TOLERANCE
+        ),
+        expand(
+            MATCHED_PAPERS_FOR_METRIC_DENSITY_COMPARISON,
             cite_tolerance = 0.05,
-            year_tolerance = 3
-        )
-    output: 
+            year_tolerance = 3,
+        ),
+        expand(
+            MATCHED_AUTHORS,
+            authorship = AUTHORSHIP,
+            cite_tolerance = 0.15,
+            prod_tolerance = 0.15
+        ),
+        IMPACT_RANK_HISTOGRAM,
+        IMPACT_LIKELIHOOD_SCATTER
+
+rule results:
+    input:
         PAPER_METRICS_DENSITY_PLOT,
         PAPER_METRICS_DENSITY_PLOT_TEST_1SAMPLE_TABLE,
-        PAPER_METRICS_DENSITY_PLOT_TEST_2SAMPLE_TABLE
-    script: "scripts/plotting/plot_paper_metrics_density.R"
-
-
-rule table_fit_by_venue:
-    input: 
-        rules.agg_letters.output,
-        rules.agg_nonletters.output,
-        rules.agg_fields.output
-    output: FIT_BY_VENUE_TABLE
-    script: "scripts/tables/table_fit_by_venue.R"
-
-rule agg_match_diagnostics:
-    input: 
-        rules.agg_letters.output,
-        collect(
-            rules.match_papers_for_impact_comparison.output,
-            delay = IMPACT_DELAY,
-            cite_tolerance = CITE_TOLERANCE,
-            year_tolerance = YEAR_TOLERANCE
-        )
-    output: AGG_MATCH_DIAGNOSTICS
-    script: "scripts/processing/agg_match_diagnostics.R"
-
-rule table_match_diagnostics:
-    input: rules.agg_match_diagnostics.output
-    output: MATCH_DIAGNOSTICS_TABLE
-    script: "scripts/tables/table_match_diagnostics.R"
-
-rule plot_impact_comparison:
-    input: 
+        PAPER_METRICS_DENSITY_PLOT_TEST_2SAMPLE_TABLE,
+        expand(POOLED_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
+        expand(PAIRWISE_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
+        FIT_BY_VENUE_TABLE,
+        AGG_MATCH_DIAGNOSTICS,
+        expand(MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS),
+        MATCHING_DIAGNOSTIC_IMPACT_PLOT,
+        FIELD_REPRESENTATION_PLOT,
         expand(
-            rules.match_papers_for_impact_comparison.output,
-            delay = 3,
-            cite_tolerance = 0.10,
-            year_tolerance = 1
+            PAIRWISE_AUTHOR_COMPARISON_PLOT,
+            metric = AUTHOR_METRICS,
+            authorship = AUTHORSHIP
         )
-    output:
-        POOLED_IMPACT_COMPARISON_PLOT,
-        PAIRWISE_IMPACT_COMPARISON_PLOT
-    script: "scripts/plotting/plot_impact_comparison.R"
-
-rule plot_match_diagnostic_impact:
-    input:
-        expand(
-            rules.match_papers_for_impact_comparison.output,
-            delay = 3,
-            cite_tolerance = 0.10,
-            year_tolerance = 1
-        )
-    output:
-        MATCHING_DIAGNOSTIC_IMPACT_PLOT
-    script: "scripts/plotting/plot_match_diagnostic_impact.R"
-
-rule plot_field_representation:
-    input: 
-        rules.agg_letters.output,
-        rules.agg_nonletters.output,
-        rules.agg_fields.output
-    output: FIELD_REPRESENTATION_PLOT
-    script: "scripts/plotting/plot_field_representation.R"
-
-
-rule plot_author_comparison:
-    input: lambda wc: 
-        expand(
-            rules.match_authors.output,
-            cite_tolerance = 0.15,
-            prod_tolerance = 1.0,
-            authorship = wc.authorship,
-            metric = wc.metric
-        )
-    output: PAIRWISE_AUTHOR_COMPARISON_PLOT
-    script: "scripts/plotting/plot_matched_author_comparison.R"

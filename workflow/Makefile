@@ -1,0 +1,17 @@
+all:
+	snakemake -j 4
+
+download:
+	snakemake -j 2 download --rerun-triggers mtime
+
+novelty:
+	snakemake -j 2 novelty --rerun-triggers mtime
+
+novelty-hpc:
+	snakemake -j 40 download
+
+match:
+	snakemake -j 4 match --rerun-triggers mtime
+
+results:
+	snakemake -j 4 results --rerun-triggers mtime
