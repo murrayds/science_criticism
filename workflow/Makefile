@@ -8,7 +8,7 @@ novelty:
 	snakemake -j 2 novelty --rerun-triggers mtime
 
 novelty-hpc:
-	snakemake -j 40 download
+	snakemake -j 40 novelty --force
 
 match:
 	snakemake -j 4 match --rerun-triggers mtime

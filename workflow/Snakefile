@@ -5,9 +5,6 @@ from workflow_helpers import get_novelty_null_iters, get_novelty_years, get_venu
 # Use a config file
 configfile: "config.yaml"
 
-SCRIPTS = ""
-
-
 RAW_DIR = j(config["data_dir"], "raw")
 DERIVED_DIR = j(config["data_dir"], "derived")
 FIG_DIR = j(config["fig_dir"], "figs")
