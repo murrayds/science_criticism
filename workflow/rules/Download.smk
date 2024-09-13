@@ -1,3 +1,9 @@
+rule dl_gbq_letter_metadata:
+    input: LETTER_IDS
+    output: LETTER_METADATA,
+    threads: workflow.cores * 0.5 if workflow.cores >= 2 else 1
+    script: "../scripts/download/dl_gbq_letter_metadata.py"
+
 rule dl_gbq_paper_impact:
     output: PAPER_IMPACT,
     threads: workflow.cores * 0.5 if workflow.cores >= 2 else 1

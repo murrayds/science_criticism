@@ -9,11 +9,12 @@ RAW_DIR = j(config["data_dir"], "raw")
 DERIVED_DIR = j(config["data_dir"], "derived")
 FIG_DIR = j(config["fig_dir"], "figs")
 
-LETTER_METADATA = j(RAW_DIR, "{venue}_letter_metadata.csv")
+#LETTER_METADATA = j(RAW_DIR, "{venue}_letter_metadata.csv")
+LETTER_IDS = j(RAW_DIR, "{venue}_letter_links.csv")
+LETTER_METADATA = j(RAW_DIR, "dl", "{venue}_letter_metadata.csv")
 PAPER_IMPACT = j(RAW_DIR, "dl", "articles", "{venue}_paper_impact.csv")
 PAPER_FIELDS = j(RAW_DIR, "dl", "articles", "{venue}_fields.csv")
 FIELD_HIERARCHY = j(RAW_DIR, "mag_field_hierarchy.csv")
-PAPER_FEATURES = j(RAW_DIR, "paper_features.csv")
 #TODO Later this should be integrated in files at query-time
 MONTH_OF_PUBLICATION = j(RAW_DIR, "month_of_publication.csv")
 
@@ -93,6 +94,7 @@ AUTHOR_METRICS = ["frac_prod", "impact_raw"]
 
 rule all:
     input:
+        expand(LETTER_METADATA, venue = VENUES),
         expand(PAPER_IMPACT, venue = VENUES),
         expand(PAPER_FIELDS, venue = VENUES),
         expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
@@ -142,6 +144,7 @@ rule all:
 
 rule download:
     input:
+        expand(LETTER_METADATA, venue = VENUES),
         expand(PAPER_IMPACT, venue = VENUES),
         expand(PAPER_FIELDS, venue = VENUES),
         expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
@@ -155,8 +158,7 @@ rule novelty:
         expand(OBSERVED_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY),
         expand(NULL_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY, iter=NULL_ITERS),
         expand(NOVELTY_ZSCORES, year = YEARS_OF_STUDY),
-        AGG_NOVELTY_ZSCORES,
-        PAPER_NOVELTY_SCORES
+        AGG_NOVELTY_ZSCORES
 
 rule match:
     input:

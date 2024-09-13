@@ -2,7 +2,7 @@ from workflow_helpers import get_venues
 
 rule agg_letters:
     input:
-        letters=expand(LETTER_METADATA, venue = get_venues(config)),
+        letters=expand(rules.dl_gbq_letter_metadata.output, venue = get_venues(config)),
         impacts=expand(rules.dl_gbq_paper_impact.output, venue = get_venues(config)),
         month=MONTH_OF_PUBLICATION
     output: AGG_LETTERS
@@ -10,7 +10,7 @@ rule agg_letters:
 
 rule agg_nonletters:
     input: 
-        letters=expand(LETTER_METADATA, venue = get_venues(config)),
+        letters=expand(rules.dl_gbq_letter_metadata.output, venue = get_venues(config)),
         impacts=expand(rules.dl_gbq_paper_impact.output, venue = get_venues(config)),
         month=MONTH_OF_PUBLICATION
     output: AGG_NONLETTERS

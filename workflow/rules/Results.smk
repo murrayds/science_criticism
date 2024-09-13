@@ -21,7 +21,7 @@ rule plot_paper_metrics_density:
         rules.agg_fields.output,
         rules.dl_gbq_paper_field_refs.output,
         rules.dl_gbq_paper_field_cites.output,
-        PAPER_FEATURES, # TODO: Replace with novelty once complete...
+        rules.calculate_paper_novelty.output, # TODO: Replace with novelty once complete...
         expand(
             rules.match_papers_for_metric_density_comparison.output,
             cite_tolerance = 0.05,

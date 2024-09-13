@@ -13,7 +13,7 @@ for index in range(len(snakemake.input.letters)):
     letters = letters.query('original_year>=2000')
 
     # filter letters pointing to retracted publications
-    letters = letters[letters.retracted != True]
+    letters = letters[letters.retracted != 1]
 
     # merge the letters dataframe with the paper_impact dataframe on the 'id' column
     letters_with_impact = pd.merge(
