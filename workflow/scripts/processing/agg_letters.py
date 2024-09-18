@@ -41,7 +41,7 @@ for index in range(len(snakemake.input.letters)):
     # not targeted towards research articles but instead perspectives or things of
     # that nature.
     min_refs = snakemake.config["processing"]["minimum_references_for_target"]
-    letters_with_impact = letters_with_impact[letters_with_impact.ReferenceCount < min_refs]
+    letters_with_impact = letters_with_impact[letters_with_impact.ReferenceCount >= min_refs]
 
     letters_list.append(letters_with_impact)
 
