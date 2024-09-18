@@ -35,12 +35,17 @@ all_refs AS (
   )
 ),
 reference_count AS (
-  SELECT 
-    r.PaperId,
-    COUNT(r.PaperReferenceId) as ReferenceCount
-  FROM all_refs r
-  LEFT JOIN {mag}.Papers p on r.PaperId = p.PaperId
-  GROUP BY r.PaperId
+  SELECT
+    PaperId,
+    COALESCE(ReferenceCount, 0) as ReferenceCount
+  FROM (
+    SELECT 
+      r.PaperId,
+      COUNT(r.PaperReferenceId) as ReferenceCount
+    FROM all_refs r
+    LEFT JOIN {mag}.Papers p on r.PaperId = p.PaperId
+    GROUP BY r.PaperId
+  )
 )
 SELECT
   cited.PaperId as id,
