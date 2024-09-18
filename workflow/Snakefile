@@ -188,11 +188,12 @@ rule match:
             cite_tolerance = 0.15,
             prod_tolerance = 0.15
         ),
-        IMPACT_RANK_HISTOGRAM,
-        IMPACT_LIKELIHOOD_SCATTER
+        
 
 rule results:
     input:
+        IMPACT_RANK_HISTOGRAM,
+        IMPACT_LIKELIHOOD_SCATTER,
         PAPER_METRICS_DENSITY_PLOT,
         PAPER_METRICS_DENSITY_PLOT_TEST_1SAMPLE_TABLE,
         PAPER_METRICS_DENSITY_PLOT_TEST_2SAMPLE_TABLE,
