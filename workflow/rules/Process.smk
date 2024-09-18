@@ -4,7 +4,6 @@ rule agg_letters:
     input:
         letters=expand(rules.dl_gbq_letter_metadata.output, venue = get_venues(config)),
         impacts=expand(rules.dl_gbq_paper_impact.output, venue = get_venues(config)),
-        month=MONTH_OF_PUBLICATION
     output: AGG_LETTERS
     script: "../scripts/processing/agg_letters.py"
 
@@ -12,7 +11,6 @@ rule agg_nonletters:
     input: 
         letters=expand(rules.dl_gbq_letter_metadata.output, venue = get_venues(config)),
         impacts=expand(rules.dl_gbq_paper_impact.output, venue = get_venues(config)),
-        month=MONTH_OF_PUBLICATION
     output: AGG_NONLETTERS
     script: "../scripts/processing/agg_nonletters.py"
         
@@ -25,6 +23,15 @@ rule agg_fields:
     params: FIELD_HIERARCHY
     output: AGG_FIELDS
     script: "../scripts/processing/agg_fields.py"
+
+rule agg_dual_cite_trajectories:
+    input: 
+        traj = expand(
+            rules.dl_gbq_dual_citation_trajectories.output,
+            venue = get_venues(config)
+        )
+    output: AGG_DUAL_CITE_TRAJECTORIES
+    script: "../scripts/processing/agg_dual_cite_trajectories.py"
 
 rule calculate_paper_novelty:
     input: 

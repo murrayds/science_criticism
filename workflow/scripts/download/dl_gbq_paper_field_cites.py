@@ -3,12 +3,16 @@ from google.cloud import bigquery
 
 from dl_helpers import extract_data_to_local_file, gen_random_sequence
 
+mag = snakemake.config["bigquery"]["mag_path"]
+aps = snakemake.config["bigquery"]["aps_path"]
+temp = snakemake.config["bigquery"]["temp_path"]
+
 QUERY = f"""
 WITH papers AS (
   SELECT 
     PaperId,
     Year
-  FROM ccnr-success.mag.Papers
+  FROM {mag}.Papers
   WHERE JournalId IN (
     {",".join(map(str, snakemake.config["venues"].values()))}
   )
@@ -21,16 +25,16 @@ aps_mag_citations AS (
   SELECT 
     citing.PaperId as PaperId,
     cited.PaperId as PaperReferenceId
-  FROM `ccnr-success.aps.citations` aps
-  LEFT JOIN `ccnr-success.mag.Papers` citing on citing.Doi = aps.citing_doi
-  LEFT JOIN `ccnr-success.mag.Papers` cited on cited.Doi = aps.cited_doi
+  FROM `{aps}.citations` aps
+  LEFT JOIN `{mag}.Papers` citing on citing.Doi = aps.citing_doi
+  LEFT JOIN `{mag}.Papers` cited on cited.Doi = aps.cited_doi
 ),
 all_refs AS (
   SELECT DISTINCT *
   FROM (
     SELECT
       *
-    FROM `ccnr-success.mag.PaperReferences`
+    FROM `{mag}.PaperReferences`
     UNION ALL 
     SELECT 
       *
@@ -43,7 +47,7 @@ cites AS (
     r.PaperId as CitingPaperId
   FROM all_refs r
   INNER JOIN papers as p1 on p1.PaperId = r.PaperReferenceId
-  LEFT JOIN ccnr-success.mag.Papers as p2 on p2.PaperId = r.PaperId
+  LEFT JOIN {mag}.Papers as p2 on p2.PaperId = r.PaperId
   WHERE (p2.Year - p1.Year) <= 5
 ),
 ref_fields AS (
@@ -51,9 +55,9 @@ ref_fields AS (
     r.*,
     f.FieldOfStudyId,
     fos.FieldOfStudyId as ParentField
-  FROM ccnr-success.mag.PaperFieldsOfStudy f
+  FROM {mag}.PaperFieldsOfStudy f
   INNER JOIN cites r on r.CitingPaperId = f.PaperId
-  LEFT JOIN ccnr-success.mag.FieldOfStudyChildren fos on fos.ChildFieldOfStudyId = f.FieldOfStudyId
+  LEFT JOIN {mag}.FieldOfStudyChildren fos on fos.ChildFieldOfStudyId = f.FieldOfStudyId
   WHERE f.Score > 0
 )
 SELECT DISTINCT
@@ -67,7 +71,7 @@ FROM (
     COALESCE(ParentField, FieldOfStudyId) AS field
   FROM ref_fields r
 ) base
-LEFT JOIN ccnr-success.mag.FieldsOfStudy fos on fos.FieldOfStudyId = field
+LEFT JOIN {mag}.FieldsOfStudy fos on fos.FieldOfStudyId = field
 WHERE Level = 0
 ORDER BY CitedPaperId, CitingPaperId
 """
@@ -76,7 +80,7 @@ client = bigquery.Client()
 
 # Execute the query
 random_seq = gen_random_sequence()
-TEMP_TABLE_REF = f"ccnr-success.dmurray.temp_{random_seq}"
+TEMP_TABLE_REF = f"{temp}.temp_{random_seq}"
 
 # Set up the query job configuration
 job_config = bigquery.QueryJobConfig(

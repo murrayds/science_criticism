@@ -8,21 +8,24 @@ from google.cloud import bigquery
 
 from dl_helpers import extract_data_to_local_file, gen_random_sequence
 
+mag = snakemake.config["bigquery"]["mag_path"]
+temp = snakemake.config["bigquery"]["temp_path"]
+
 venue = snakemake.config["venues"][snakemake.wildcards.venue]
 
 letter_ids = pd.read_csv(snakemake.input[0])
 
 client = bigquery.Client()
 
-SOURCE_DATA_TABLE_REF = f"ccnr-success.dmurray.temp_{venue}_letter_ids"
+SOURCE_DATA_TABLE_REF = f"{temp}.temp_{venue}_letter_ids"
 # Upload data from the file at the path given by the variable "letter_ids" to a temporary table on Google Big Query
 job_config = bigquery.LoadJobConfig(
     source_format=bigquery.SourceFormat.CSV,
     skip_leading_rows=1,
     autodetect=True,
     schema=[
-        bigquery.SchemaField("original_id", "INT64"),
-        bigquery.SchemaField("letter_id", "INT64")
+        bigquery.SchemaField("original_doi", "STRING"),
+        bigquery.SchemaField("letter_doi", "STRING")
     ],
     write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE
 )
@@ -42,20 +45,20 @@ print(f"Data uploaded to temporary table: {SOURCE_DATA_TABLE_REF}")
 # Now, we will proceed to gather the 
 QUERY = f"""
 SELECT
-  s.original_id as original_id,
-  s.letter_id as letter_id,
+  orig.PaperId as original_id,
+  lett.PaperId as letter_id,
   orig.Year as original_year,
   lett.Year as letter_year,
   IF(orig.DocSubTypes = "", 0, 1) AS retracted,
-  "{snakemake.wildcards.venue}" as venue,
+  "{snakemake.wildcards.venue}" as venue
 FROM `{SOURCE_DATA_TABLE_REF}` s 
-LEFT JOIN `ccnr-success.mag.Papers` orig on orig.PaperId = s.original_id
-LEFT JOIN `ccnr-success.mag.Papers` lett on lett.PaperId = s.letter_id
+LEFT JOIN `{mag}.Papers` orig on orig.Doi = s.original_doi
+LEFT JOIN `{mag}.Papers` lett on lett.Doi = s.letter_doi
 """
 
 # Execute the query
 random_seq = gen_random_sequence()
-TEMP_TABLE_REF = f"ccnr-success.dmurray.temp_{random_seq}"
+TEMP_TABLE_REF = f"{temp}.temp_{random_seq}"
 
 # Set up the query job configuration
 job_config = bigquery.QueryJobConfig(

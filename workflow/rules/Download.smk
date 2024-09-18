@@ -38,3 +38,9 @@ rule dl_gbq_career_histories:
     output: CAREER_HISTORIES
     threads: workflow.cores * 0.5 if workflow.cores >= 2 else 1
     script: "../scripts/download/dl_gbq_career_histories.py"
+
+rule dl_gbq_dual_citation_trajectories:
+    input: LETTER_IDS
+    output: DUAL_CITE_TRAJECTORIES,
+    threads: workflow.cores * 0.5 if workflow.cores >= 2 else 1
+    script: "../scripts/download/dl_gbq_dual_citation_trajectories.py"

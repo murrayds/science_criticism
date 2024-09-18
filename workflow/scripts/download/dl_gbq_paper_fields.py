@@ -6,13 +6,16 @@ from google.cloud import bigquery
 
 from dl_helpers import extract_data_to_local_file, gen_random_sequence
 
+mag = snakemake.config["bigquery"]["mag_path"]
+temp = snakemake.config["bigquery"]["temp_path"]
+
 venue = snakemake.config["venues"][snakemake.wildcards.venue]
 
 QUERY = f"""
 WITH target_papers AS (
   SELECT 
     PaperId 
-  FROM ccnr-success.mag.Papers 
+  FROM {mag}.Papers 
   WHERE 
     JournalId = {venue}
     AND DocType = "Journal"
@@ -24,9 +27,9 @@ SELECT
   p.PaperId AS id,
   f.FieldOfStudyId AS field,
   fos.Level as level
-FROM ccnr-success.mag.PaperFieldsOfStudy f
+FROM {mag}.PaperFieldsOfStudy f
 INNER JOIN target_papers p on p.PaperId = f.PaperId
-LEFT JOIN ccnr-success.mag.FieldsOfStudy fos on fos.FieldOfStudyId = f.FieldOfStudyId
+LEFT JOIN {mag}.FieldsOfStudy fos on fos.FieldOfStudyId = f.FieldOfStudyId
 WHERE 
   (fos.Level = 0 OR fos.Level = 1)
   AND f.Score > 0
@@ -36,7 +39,7 @@ client = bigquery.Client()
 
 # Execute the query
 random_seq = gen_random_sequence()
-TEMP_TABLE_REF = f"ccnr-success.dmurray.temp_{random_seq}"
+TEMP_TABLE_REF = f"{temp}.temp_{random_seq}"
 
 # Set up the query job configuration
 job_config = bigquery.QueryJobConfig(

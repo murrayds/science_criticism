@@ -104,3 +104,10 @@ rule plot_author_comparison:
         )
     output: PAIRWISE_AUTHOR_COMPARISON_PLOT
     script: "../scripts/plotting/plot_matched_author_comparison.R"
+
+rule plot_cite_ratio:
+    input:
+        letters = rules.agg_letters.output,
+        traj = rules.agg_dual_cite_trajectories.output 
+    output: CITE_RATIO_PLOT
+    script: "../scripts/plotting/plot_cite_ratio.R"
