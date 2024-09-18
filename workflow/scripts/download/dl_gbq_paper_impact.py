@@ -19,8 +19,8 @@ WITH aps_mag_citations AS (
     citing.PaperId as PaperId,
     cited.PaperId as PaperReferenceId
   FROM `{aps}.citations` aps
-  LEFT JOIN `{mag}.Papers` citing on citing.Doi = aps.citing_doi
-  LEFT JOIN `{mag}.Papers` cited on cited.Doi = aps.cited_doi
+  LEFT JOIN `{mag}.Papers` citing on citing.Doi = UPPER(aps.citing_doi)
+  LEFT JOIN `{mag}.Papers` cited on cited.Doi = UPPER(aps.cited_doi)
 ),
 all_refs AS (
   SELECT DISTINCT *
