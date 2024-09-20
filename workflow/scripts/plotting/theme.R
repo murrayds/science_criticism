@@ -41,7 +41,7 @@ venue_colors <- function() {
     "PNAS" = "goldenrod",
     "PRL" = "steelblue",
     "NEJM" = "darkviolet",
-    "Geology": "coral4"
+    "Geology" = "coral4"
   )
 }
 
