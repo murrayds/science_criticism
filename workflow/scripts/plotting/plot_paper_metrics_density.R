@@ -302,7 +302,7 @@ p <- df_all %>%
     x = 0.04, y = 1.95, hjust = 0,
     size = 3.5
   ) +
-  facet_grid(metric ~ venue, switch = "y") +
+  facet_grid(venue ~ metric, switch = "y") +
   scale_fill_manual(values = venue_colors(), guide = "none") +
   scale_x_continuous(
     expand = c(0, 0),
@@ -323,7 +323,7 @@ p <- df_all %>%
   xlab("Percentile rank")
 
 
-ggsave(p, filename = snakemake@output[[1]], width = 9, height = 6, bg = "white")
+ggsave(p, filename = snakemake@output[[1]], width = 6, height = 9, bg = "white")
 
 #
 # Now, lets save the table to a separate file...
