@@ -40,8 +40,12 @@ PAPER_NOVELTY_SCORES = j(DERIVED_DIR, "novelty", "paper_zscores.csv")
 
 
 MATCHED_PAPERS_FOR_METRIC_DENSITY_COMPARISON = j(DERIVED_DIR, "matched", "matched_papers_metricdensity_{cite_tolerance}impact_{year_tolerance}year.csv")
+
+_MATCHED_PAPERS_FOR_IMPACT_COMPARISON_SPLIT = j(DERIVED_DIR, "matched", "_{venue}_matched_papers_stage1_{delay}delay_{cite_tolerance}impact_{year_tolerance}year.csv")
 MATCHED_PAPERS_FOR_IMPACT_COMPARISON = j(DERIVED_DIR, "matched", "matched_papers_stage1_{delay}delay_{cite_tolerance}impact_{year_tolerance}year.csv")
 AGG_MATCH_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_match_diagnostics.csv")
+
+_MATCHED_AUTHORS_SPLIT = j(DERIVED_DIR, "matched", "_{venue}_matched_{authorship}_authors_{cite_tolerance}impact_{prod_tolerance}prod.csv")
 MATCHED_AUTHORS = j(DERIVED_DIR, "matched", "matched_{authorship}_authors_{cite_tolerance}impact_{prod_tolerance}prod.csv")
 
 
@@ -150,7 +154,6 @@ rule download:
         expand(LETTER_METADATA, venue = VENUES),
         expand(PAPER_IMPACT, venue = VENUES),
         expand(PAPER_FIELDS, venue = VENUES),
-        expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
         expand(DUAL_CITE_TRAJECTORIES, venue = VENUES),
         TARGET_JOURNAL_REFS,
         CAREER_HISTORIES,
@@ -163,6 +166,7 @@ rule download:
 
 rule novelty:
     input:
+        expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
         expand(OBSERVED_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY),
         expand(NULL_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY, iter=NULL_ITERS),
         expand(NOVELTY_ZSCORES, year = YEARS_OF_STUDY),
@@ -184,10 +188,15 @@ rule match:
         expand(
             MATCHED_AUTHORS,
             authorship = AUTHORSHIP,
-            cite_tolerance = 0.15,
-            prod_tolerance = 0.15
+            cite_tolerance = config["matching"]["cite_tolerance"],
+            prod_tolerance = config["matching"]["productivity_tolerance"]
         ),
         
+
+rule tables:
+    input:
+        AGG_MATCH_DIAGNOSTICS,
+        expand(MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS)
 
 rule results:
     input:
@@ -199,8 +208,6 @@ rule results:
         expand(POOLED_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
         expand(PAIRWISE_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
         FIT_BY_VENUE_TABLE,
-        AGG_MATCH_DIAGNOSTICS,
-        expand(MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS),
         MATCHING_DIAGNOSTIC_IMPACT_PLOT,
         FIELD_REPRESENTATION_PLOT,
         expand(

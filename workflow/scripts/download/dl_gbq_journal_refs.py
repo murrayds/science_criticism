@@ -73,13 +73,31 @@ FROM refs
 """
 
 client = bigquery.Client()
-
 # First, check to see if the table exists...if not create it
+# Additionally, check if the table is more than 1 hour old, and if it is, re-create the table
 MAIN_REF_TABLE = f"{temp}.temp_refs_table"
 
 try:
-    client.get_table(MAIN_REF_TABLE)
+    table = client.get_table(MAIN_REF_TABLE)
     print(f"Table {MAIN_REF_TABLE} already exists.")
+    # Check if the table is more than 1 hour old
+    from datetime import datetime, timedelta
+    if datetime.now() - table.created > timedelta(hours=1):
+        print(f"Table {MAIN_REF_TABLE} is more than 1 hour old. Re-creating it now.")
+        # Set up the query job configuration
+        job_config = bigquery.QueryJobConfig(
+            destination=MAIN_REF_TABLE,
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
+            use_query_cache=False
+        )
+
+        # Run the query and save results to the new table
+        query_job = client.query(BUILD_TABLE_QUERY, job_config=job_config)
+        query_job.result()  # Wait for the query to complete
+
+        print(f"Query results re-exported to: {MAIN_REF_TABLE}")
+    else:
+        print(f"Table {MAIN_REF_TABLE} is less than 1 hour old. No re-creation needed.")
 except NotFound:
     print(f"Table {MAIN_REF_TABLE} is not found. Creating it now.")
     

@@ -1,5 +1,7 @@
 source("scripts/plotting/theme.R")
 
+library(MatchIt)
+
 logbin <- function(data, scale = 1, zeros = FALSE) {
   # Generate breakpoints of exponentially increasing width
   # for use in binning logarithmic data.
@@ -59,7 +61,7 @@ perform_matching <- function(df, cite_tolerance, year_tolerance) {
   formula <- treat ~ year + impact_norm
 
   # Must have exact match on field and venue...
-  exact_formula <- ~ field + quarter + venue + multifield
+  exact_formula <- ~ field + quarter + multifield
 
   # Perform the matching
   match <- matchit(

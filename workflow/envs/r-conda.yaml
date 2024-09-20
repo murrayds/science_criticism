@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  - r
+dependencies:
+  - r-base=4.3.3
+  - r-tidyverse
+  - r-matchit
+  - r-xtable

@@ -31,7 +31,7 @@ rule agg_dual_cite_trajectories:
             venue = get_venues(config)
         )
     output: AGG_DUAL_CITE_TRAJECTORIES
-    script: "../scripts/processing/agg_dual_cite_trajectories.py"
+    script: "../scripts/processing/gather.py"
 
 rule calculate_paper_novelty:
     input: 

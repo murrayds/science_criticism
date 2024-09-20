@@ -5,16 +5,21 @@ library(MatchIt)
 
 source("scripts/common.R")
 
-letters <- read_csv(snakemake@input[[1]], col_types = cols())
-articles <- read_csv(snakemake@input[[2]], col_types = cols())
-fields <- read_csv(snakemake@input[[3]], col_types = cols())
-
+# the venue for which to perform matching...
+target_venue <- snakemake@wildcards[[1]]
 
 # This is the amount of time POST CRITICAL LETTER at which we should measure
 # the impact.
-impact_delay <- as.numeric(snakemake@wildcards[[1]])
-cite_tolerance <- as.numeric(snakemake@wildcards[[2]])
-year_tolerance <- as.numeric(snakemake@wildcards[[3]])
+impact_delay <- as.numeric(snakemake@wildcards[[2]])
+cite_tolerance <- as.numeric(snakemake@wildcards[[3]])
+year_tolerance <- as.numeric(snakemake@wildcards[[4]])
+
+
+letters <- read_csv(snakemake@input[[1]], col_types = cols()) %>%
+  filter(venue == target_venue)
+articles <- read_csv(snakemake@input[[2]], col_types = cols()) %>%
+  filter(venue == target_venue)
+fields <- read_csv(snakemake@input[[3]], col_types = cols())
 
 # Apply basic filtering and pre-processing first...
 letters <- letters %>%
@@ -112,12 +117,16 @@ prepare_df_for_matching <- function(x, letters, articles, fields) {
 # and perform the matching`
 df_matched_list <- lapply(c(0:6), function(x) {
   prepared_df_part <- prepare_df_for_matching(x, letters, articles, fields)
-  matched_df_part <- perform_matching(
-    prepared_df_part,
-    cite_tolerance = cite_tolerance,
-    year_tolerance = year_tolerance
-  )
-  return(matched_df_part)
+  if (sum(prepared_df_part$treat == 1) < 5) {
+    return(NULL)
+  } else {
+    matched_df_part <- perform_matching(
+      prepared_df_part,
+      cite_tolerance = cite_tolerance,
+      year_tolerance = year_tolerance
+    )
+    return(matched_df_part)
+  }
 })
 
 # aggregate the results as a single dataframe
