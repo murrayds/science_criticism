@@ -1,15 +1,4 @@
 executor: cluster-generic 
-#jobscript: "/work/murray-lab/science_criticism/workflow/profiles/slurm/jobscript.sh"
-#jobs: 50
-#conda:
-#  use_envmodules: true  # In case your HPC uses environment modules for Conda
-#  export: false  # Disable the automatic export of Conda environments
-#default-resources:
-#  - mem_mb=8000
-#  - runtime=60
-#  - cpus=4
-#  - slurm_partition="netsi_standard"
-#  - slurm_account="d.murray"
 cluster-generic-submit-cmd:
   mkdir -p logs/{rule} &&
   sbatch
