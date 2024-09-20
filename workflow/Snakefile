@@ -155,8 +155,7 @@ rule novelty:
         expand(OBSERVED_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY),
         expand(NULL_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY, iter=NULL_ITERS),
         expand(NOVELTY_ZSCORES, year = YEARS_OF_STUDY),
-        AGG_NOVELTY_ZSCORES,
-        PAPER_NOVELTY_SCORES
+        AGG_NOVELTY_ZSCORES
 
 rule match:
     input:
