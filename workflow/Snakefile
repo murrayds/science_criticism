@@ -10,7 +10,6 @@ DL_DIR = j(config["data_dir"], "downloaded")
 DERIVED_DIR = j(config["data_dir"], "derived")
 FIG_DIR = j(config["fig_dir"], "figs")
 
-#LETTER_METADATA = j(RAW_DIR, "{venue}_letter_metadata.csv")
 LETTER_IDS = j(RAW_DIR, "{venue}_letter_links.csv")
 FIELD_HIERARCHY = j(RAW_DIR, "mag_field_hierarchy.csv")
 LETTER_METADATA = j(DL_DIR, "{venue}", "{venue}_letter_metadata.csv")
