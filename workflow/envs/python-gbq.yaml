@@ -1,0 +1,11 @@
+name: python-gbq # You can change this name to your desired environment name
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10  # Specify the Python version you need
+  - pandas
+  - pip
+  - pip:
+    - google-cloud-bigquery
+    - google-cloud-storage
