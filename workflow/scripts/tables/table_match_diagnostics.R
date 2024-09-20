@@ -103,7 +103,7 @@ tab <- data.table::rbindlist(
 # Construct the table
 latex_table <- xtable(
   tab,
-  align = c("lccccccc"),
+  align = c("lccccccccc"),
   digits = 0,
 )
 
