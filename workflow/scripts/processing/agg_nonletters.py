@@ -24,8 +24,4 @@ for index in range(len(snakemake.input.letters)):
     
 agg_articles = pd.concat(articles_list, ignore_index=True)
 
-month = pd.read_csv(snakemake.input.month)
-agg_articles = pd.merge(agg_articles, month, on="id", how = "left")
-
-
 agg_articles.to_csv(snakemake.output[0], index=False)

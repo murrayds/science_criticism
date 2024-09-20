@@ -2,7 +2,7 @@ all:
 	snakemake -j 4
 
 download:
-	snakemake -j 2 download --rerun-triggers mtime
+	snakemake -j 1 download --rerun-triggers mtime
 
 novelty:
 	snakemake -j 2 novelty --rerun-triggers mtime

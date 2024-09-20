@@ -21,7 +21,7 @@ rule plot_paper_metrics_density:
         rules.agg_fields.output,
         rules.dl_gbq_paper_field_refs.output,
         rules.dl_gbq_paper_field_cites.output,
-        PAPER_FEATURES, # TODO: Replace with novelty once complete...
+        rules.calculate_paper_novelty.output, # TODO: Replace with novelty once complete...
         expand(
             rules.match_papers_for_metric_density_comparison.output,
             cite_tolerance = 0.05,
@@ -104,3 +104,10 @@ rule plot_author_comparison:
         )
     output: PAIRWISE_AUTHOR_COMPARISON_PLOT
     script: "../scripts/plotting/plot_matched_author_comparison.R"
+
+rule plot_cite_ratio:
+    input:
+        letters = rules.agg_letters.output,
+        traj = rules.agg_dual_cite_trajectories.output 
+    output: CITE_RATIO_PLOT
+    script: "../scripts/plotting/plot_cite_ratio.R"

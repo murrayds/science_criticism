@@ -6,26 +6,29 @@ from workflow_helpers import get_novelty_null_iters, get_novelty_years, get_venu
 configfile: "config.yaml"
 
 RAW_DIR = j(config["data_dir"], "raw")
+DL_DIR = j(config["data_dir"], "downloaded")
 DERIVED_DIR = j(config["data_dir"], "derived")
 FIG_DIR = j(config["fig_dir"], "figs")
 
-LETTER_METADATA = j(RAW_DIR, "{venue}_letter_metadata.csv")
-PAPER_IMPACT = j(RAW_DIR, "dl", "articles", "{venue}_paper_impact.csv")
-PAPER_FIELDS = j(RAW_DIR, "dl", "articles", "{venue}_fields.csv")
+#LETTER_METADATA = j(RAW_DIR, "{venue}_letter_metadata.csv")
+LETTER_IDS = j(RAW_DIR, "{venue}_letter_links.csv")
 FIELD_HIERARCHY = j(RAW_DIR, "mag_field_hierarchy.csv")
-PAPER_FEATURES = j(RAW_DIR, "paper_features.csv")
-#TODO Later this should be integrated in files at query-time
-MONTH_OF_PUBLICATION = j(RAW_DIR, "month_of_publication.csv")
+LETTER_METADATA = j(DL_DIR, "{venue}", "{venue}_letter_metadata.csv")
+PAPER_IMPACT = j(DL_DIR, "{venue}", "{venue}_paper_impact.csv")
+PAPER_FIELDS = j(DL_DIR, "{venue}", "{venue}_fields.csv")
+DUAL_CITE_TRAJECTORIES = j(DL_DIR, "{venue}", "{venue}_dual_cite_trajectories.csv"),
 
-JOURNAL_REFS = j(RAW_DIR, "dl", "journal_refs_{year}.csv")
-TARGET_JOURNAL_REFS = j(RAW_DIR, "dl", "target_journal_refs.csv")
-PAPER_FIELD_REFS = j(RAW_DIR, "dl", "paper_field_refs.csv")
-PAPER_FIELD_CITES = j(RAW_DIR, "dl", "paper_field_cites.csv")
-CAREER_HISTORIES = j(RAW_DIR, "dl", "career_histories.csv")
+
+JOURNAL_REFS = j(DL_DIR, "journal_refs", "journal_refs_{year}.csv")
+TARGET_JOURNAL_REFS = j(DL_DIR, "journal_refs", "target_journal_refs.csv")
+PAPER_FIELD_REFS = j(DL_DIR, "paper_field_refs.csv")
+PAPER_FIELD_CITES = j(DL_DIR, "paper_field_cites.csv")
+CAREER_HISTORIES = j(DL_DIR, "career_histories.csv")
 
 AGG_LETTERS = j(DERIVED_DIR, "agg", "agg_letters.csv")
 AGG_NONLETTERS = j(DERIVED_DIR, "agg", "agg_nonletters.csv")
 AGG_FIELDS = j(DERIVED_DIR, "agg", "agg_fields.csv")
+AGG_DUAL_CITE_TRAJECTORIES = j(DERIVED_DIR, "agg", "agg_dual_cite_trajectories.csv")
 
 OBSERVED_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "observed", "observed_journal_cooccurence_counts_{year}.pickle")
 NULL_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "null", "null_journal_cooccurence_counts_{year}_iter{iter}.pickle")
@@ -61,6 +64,8 @@ FIELD_REPRESENTATION_PLOT = j(FIG_DIR, "field_representation_plot.png")
 MATCHING_DIAGNOSTIC_IMPACT_PLOT = j(FIG_DIR, "diagnostics", "matching_diagnostic_impact_plot.png")
 MATCH_DIAGNOSTICS_TABLE = j(FIG_DIR, "tables", "match_{diagnostic}_parameters.txt")
 
+CITE_RATIO_PLOT = j(FIG_DIR, "ratio_original_letter_citations.png")
+
 ####################
 # INCLUDES
 ####################
@@ -93,6 +98,7 @@ AUTHOR_METRICS = ["frac_prod", "impact_raw"]
 
 rule all:
     input:
+        expand(LETTER_METADATA, venue = VENUES),
         expand(PAPER_IMPACT, venue = VENUES),
         expand(PAPER_FIELDS, venue = VENUES),
         expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
@@ -142,13 +148,19 @@ rule all:
 
 rule download:
     input:
+        expand(LETTER_METADATA, venue = VENUES),
         expand(PAPER_IMPACT, venue = VENUES),
         expand(PAPER_FIELDS, venue = VENUES),
         expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
+        expand(DUAL_CITE_TRAJECTORIES, venue = VENUES),
         TARGET_JOURNAL_REFS,
         CAREER_HISTORIES,
         PAPER_FIELD_REFS,
-        PAPER_FIELD_CITES
+        PAPER_FIELD_CITES,
+        AGG_LETTERS,
+        AGG_NONLETTERS,
+        AGG_FIELDS,
+        AGG_DUAL_CITE_TRAJECTORIES
 
 rule novelty:
     input:
@@ -176,11 +188,12 @@ rule match:
             cite_tolerance = 0.15,
             prod_tolerance = 0.15
         ),
-        IMPACT_RANK_HISTOGRAM,
-        IMPACT_LIKELIHOOD_SCATTER
+        
 
 rule results:
     input:
+        IMPACT_RANK_HISTOGRAM,
+        IMPACT_LIKELIHOOD_SCATTER,
         PAPER_METRICS_DENSITY_PLOT,
         PAPER_METRICS_DENSITY_PLOT_TEST_1SAMPLE_TABLE,
         PAPER_METRICS_DENSITY_PLOT_TEST_2SAMPLE_TABLE,
@@ -195,4 +208,5 @@ rule results:
             PAIRWISE_AUTHOR_COMPARISON_PLOT,
             metric = AUTHOR_METRICS,
             authorship = AUTHORSHIP
-        )
+        ),
+        CITE_RATIO_PLOT

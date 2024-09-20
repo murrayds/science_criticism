@@ -6,20 +6,23 @@ from dl_helpers import extract_data_to_local_file, gen_random_sequence
 # Retreive the year wildcard passed into the file
 YEAR = int(snakemake.wildcards.year)
 
+mag = snakemake.config["bigquery"]["mag_path"]
+aps = snakemake.config["bigquery"]["aps_path"]
+temp = snakemake.config["bigquery"]["temp_path"]
 
 # Check if the table exists
-BUILD_TABLE_QUERY = """
+BUILD_TABLE_QUERY = f"""
 WITH target_journals AS (
   SELECT 
     JournalID
-  FROM `ccnr-success.mag.Journals`
+  FROM `{mag}.Journals`
   WHERE PaperCount > 1000
 ),
 papers AS (
   SELECT
     p.PaperId as CitingPaperId,
     p.Year as CitingPaperYear
-  FROM `ccnr-success.mag.Papers` p
+  FROM `{mag}.Papers` p
   INNER JOIN target_journals j on j.JournalId = p.JournalId
   WHERE DocType = "Journal"
   AND Doi IS NOT NULL
@@ -31,16 +34,16 @@ aps_mag_citations AS (
   SELECT 
     citing.PaperId as PaperId,
     cited.PaperId as PaperReferenceId
-  FROM `ccnr-success.aps.citations` aps
-  LEFT JOIN `ccnr-success.mag.Papers` citing on citing.Doi = aps.citing_doi
-  LEFT JOIN `ccnr-success.mag.Papers` cited on cited.Doi = aps.cited_doi
+  FROM `{aps}.citations` aps
+  LEFT JOIN `{mag}.Papers` citing on citing.Doi = UPPER(aps.citing_doi)
+  LEFT JOIN `{mag}.Papers` cited on cited.Doi = UPPER(aps.cited_doi)
 ),
 all_refs AS (
   SELECT DISTINCT *
   FROM (
     SELECT
       *
-    FROM `ccnr-success.mag.PaperReferences`
+    FROM `{mag}.PaperReferences`
     UNION ALL 
     SELECT 
       *
@@ -55,7 +58,7 @@ refs AS (
     p2.Year as ReferenceYear
   FROM all_refs r
   INNER JOIN papers as p ON p.CitingPaperId = r.PaperId
-  LEFT JOIN `ccnr-success.mag.Papers` p2 on p2.PaperId = r.PaperReferenceId
+  LEFT JOIN `{mag}.Papers` p2 on p2.PaperId = r.PaperReferenceId
   INNER JOIN target_journals j on j.JournalId = p2.JournalId
   WHERE p2.Doi IS NOT NULL
   AND p2.DocType = "Journal"
@@ -72,7 +75,7 @@ FROM refs
 client = bigquery.Client()
 
 # First, check to see if the table exists...if not create it
-MAIN_REF_TABLE = "ccnr-success.mag.dmurray_selected_refs"
+MAIN_REF_TABLE = f"{temp}.temp_refs_table"
 
 try:
     client.get_table(MAIN_REF_TABLE)
@@ -109,7 +112,7 @@ WHERE CitingPaperYear = {YEAR}
 query_job = client.query(SELECT_YEAR_QUERY)
 
 random_seq = gen_random_sequence()
-SELECTED_TABLE_REF = f"ccnr-success.dmurray.temp_{random_seq}"
+SELECTED_TABLE_REF = f"{temp}.temp_{random_seq}"
 
 # Set up the query job configuration
 job_config = bigquery.QueryJobConfig(

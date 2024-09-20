@@ -30,7 +30,7 @@ matched <- read_csv(snakemake@input[[7]], col_types = cols())
 
 #
 # DATA PREPARATION
-# 
+#
 
 # Organize by level 0 field...
 df_byfield <- fields %>%
@@ -106,7 +106,7 @@ plotdata_cite_diversity <- df_byfield %>%
 
 #
 # NOVELTY DATA
-# 
+#
 
 # Calculate percentile ranks by venue, period, and level0 field
 # for each papers' novelty
@@ -115,7 +115,7 @@ plotdata_novelty <- df_byfield %>%
   group_by(venue, period, field) %>%
   mutate(
     # use reverse novelty for consistent interpretation
-    rank = percent_rank(-Atyp_10pct_Z)
+    rank = percent_rank(-Zscore_10th)
   ) %>%
   # When multiple fields are present, use mean rank...
   group_by(venue, type, id) %>%
@@ -131,7 +131,6 @@ plotdata_novelty <- df_byfield %>%
 # Calculate percentile ranks by venue, period, and level0 field
 # for each papers' 3-year impact...
 plotdata_impact <- df_byfield %>%
-  left_join(novelty, by = "id") %>%
   group_by(venue, period, field) %>%
   mutate(
     rank = percent_rank(impact_3year)

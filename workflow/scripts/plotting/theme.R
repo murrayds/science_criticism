@@ -4,7 +4,9 @@ venue_levels <- function() {
     "Nature",
     "Science",
     "PNAS",
-    "PRL"
+    "PRL",
+    "NEJM",
+    "Geology"
   )
 }
 
@@ -15,7 +17,7 @@ field_values <- function() {
     `71924100` = "medicine",
     `192562407` = "materials science",
     `144024400` = "sociology",
-    `17744445` = "politicol science",
+    `17744445` = "political science",
     `39432304` = "environmental science",
     `127413603` = "engineering",
     `41008148` = "computer science",
@@ -34,11 +36,13 @@ field_values <- function() {
 
 venue_colors <- function() {
   c(
-      "Nature" = "forestgreen",
-      "Science" = "firebrick",
-      "PNAS" = "goldenrod",
-      "PRL" = "steelblue"
-  ) 
+    "Nature" = "forestgreen",
+    "Science" = "firebrick",
+    "PNAS" = "goldenrod",
+    "PRL" = "steelblue",
+    "NEJM" = "darkviolet",
+    "Geology": "coral4"
+  )
 }
 
 
@@ -46,7 +50,11 @@ theme_criticism <- function() {
   require(ggplot2)
   theme_minimal() +
   theme(
-    panel.background = element_rect(fill = NA, color = "black", linewidth = 0.5),
+    panel.background = element_rect(
+      fill = NA,
+      color = "black",
+      linewidth = 0.5
+    ),
     text = element_text(family = "Helvetica", size = 12),
     legend.background = element_rect(fill = "white", linewidth = 0.6),
     legend.title = element_blank(),

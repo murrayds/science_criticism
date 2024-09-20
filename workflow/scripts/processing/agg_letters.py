@@ -13,7 +13,7 @@ for index in range(len(snakemake.input.letters)):
     letters = letters.query('original_year>=2000')
 
     # filter letters pointing to retracted publications
-    letters = letters[letters.retracted != True]
+    letters = letters[letters.retracted != 1]
 
     # merge the letters dataframe with the paper_impact dataframe on the 'id' column
     letters_with_impact = pd.merge(
@@ -37,13 +37,16 @@ for index in range(len(snakemake.input.letters)):
 
     letters_with_impact = letters_with_impact.drop_duplicates(subset='original_id')
 
+    # Drop those for whom the original paper has too few references...these are likely 
+    # not targeted towards research articles but instead perspectives or things of
+    # that nature.
+    min_refs = snakemake.config["processing"]["minimum_references_for_target"]
+    letters_with_impact = letters_with_impact[letters_with_impact.ReferenceCount >= min_refs]
+
     letters_list.append(letters_with_impact)
 
 # combine them all into a single dataframe
 agg_letters = pd.concat(letters_list, ignore_index=True)
-
-month = pd.read_csv(snakemake.input.month)
-agg_letters = pd.merge(agg_letters, month, on="id", how = "left")
 
 # write the output
 agg_letters.to_csv(snakemake.output[0], index=False)

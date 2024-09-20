@@ -32,7 +32,7 @@ kPublicationWindow <- 5
 kMinProductivity <- 5
 kMinCareerAge <- 5
 
-venues <- c("Nature", "Science", "PNAS", "PRL")
+venues <- c("Nature", "Science", "PNAS", "PRL", "NEJM", "Geology")
 
 # First, iterate over each venue
 df_matched_parts <- lapply(venues, function(event_venue) {
