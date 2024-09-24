@@ -40,7 +40,6 @@ matched <- data.table::rbindlist(lapply(match_files, function(f) {
     group_by(venue, match.group, treat) %>%
     arrange(venue, match.group, treat)
 
-  print(head(t_matched))
   # Conduct statistical tests and save results
   tests <- t_matched %>%
     mutate(
