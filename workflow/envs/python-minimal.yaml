@@ -7,3 +7,7 @@ dependencies:
   - pandas
   - numpy
   - tqdm
+  - pip
+  - pip:
+    - transformers
+    - adapters

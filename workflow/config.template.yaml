@@ -19,7 +19,8 @@ novelty:
   start_year: 2000
   end_year: 2020
 matching:
-  impact_delay: [2, 3, 4]
-  cite_tolerance: [0.05, 0.1, 0.15]
-  year_tolerance: [1, 2, 3]
-  productivity_tolerance: [0.05, 0.1, 0.15]
+  impact_delay: [3]
+  cite_tolerance: [0.05, 0.1]
+  year_tolerance: [2]
+  productivity_tolerance: [0.1]
+  authorship: ["first", "last"]

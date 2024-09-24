@@ -43,11 +43,11 @@ MATCHED_PAPERS_FOR_METRIC_DENSITY_COMPARISON = j(DERIVED_DIR, "matched", "matche
 
 _MATCHED_PAPERS_FOR_IMPACT_COMPARISON_SPLIT = j(DERIVED_DIR, "matched", "_{venue}_matched_papers_stage1_{delay}delay_{cite_tolerance}impact_{year_tolerance}year.csv")
 MATCHED_PAPERS_FOR_IMPACT_COMPARISON = j(DERIVED_DIR, "matched", "matched_papers_stage1_{delay}delay_{cite_tolerance}impact_{year_tolerance}year.csv")
-AGG_MATCH_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_match_diagnostics.csv")
+AGG_PAPER_IMPACT_MATCHED_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_paper_impact_match_diagnostics.csv")
 
 _MATCHED_AUTHORS_SPLIT = j(DERIVED_DIR, "matched", "_{venue}_matched_{authorship}_authors_{cite_tolerance}impact_{prod_tolerance}prod.csv")
 MATCHED_AUTHORS = j(DERIVED_DIR, "matched", "matched_{authorship}_authors_{cite_tolerance}impact_{prod_tolerance}prod.csv")
-
+AGG_AUTHOR_MATCHED_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_author_match_{metric}_diagnostics.csv")
 
 IMPACT_RANK_HISTOGRAM = j(FIG_DIR, "impact_rank_histogram.png")
 IMPACT_LIKELIHOOD_SCATTER = j(FIG_DIR, "impact_likelihood_scatter.png")
@@ -65,7 +65,7 @@ PAIRWISE_AUTHOR_COMPARISON_PLOT = j(FIG_DIR, "pairwise_author_comparison_{metric
 FIELD_REPRESENTATION_PLOT = j(FIG_DIR, "field_representation_plot.png")
 
 MATCHING_DIAGNOSTIC_IMPACT_PLOT = j(FIG_DIR, "diagnostics", "matching_diagnostic_impact_plot.png")
-MATCH_DIAGNOSTICS_TABLE = j(FIG_DIR, "tables", "match_{diagnostic}_parameters.txt")
+PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE = j(FIG_DIR, "tables", "match_{diagnostic}_parameters.txt")
 
 CITE_RATIO_PLOT = j(FIG_DIR, "ratio_original_letter_citations.png")
 
@@ -96,7 +96,7 @@ YEARS_OF_STUDY = get_novelty_years(config)
 NULL_ITERS = get_novelty_null_iters(config)
 
 
-AUTHORSHIP = ["first", "last"]
+AUTHORSHIP = config["matching"]["authorship"]
 AUTHOR_METRICS = ["frac_prod", "impact_raw"]
 
 rule all:
@@ -139,8 +139,6 @@ rule all:
         expand(POOLED_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
         expand(PAIRWISE_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
         FIT_BY_VENUE_TABLE,
-        AGG_MATCH_DIAGNOSTICS,
-        expand(MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS),
         MATCHING_DIAGNOSTIC_IMPACT_PLOT,
         FIELD_REPRESENTATION_PLOT,
         expand(
@@ -191,12 +189,13 @@ rule match:
             cite_tolerance = config["matching"]["cite_tolerance"],
             prod_tolerance = config["matching"]["productivity_tolerance"]
         ),
+        AGG_PAPER_IMPACT_MATCHED_DIAGNOSTICS,
+        expand(AGG_AUTHOR_MATCHED_DIAGNOSTICS, metric = AUTHOR_METRICS)
         
 
 rule tables:
     input:
-        AGG_MATCH_DIAGNOSTICS,
-        expand(MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS)
+        expand(PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS)
 
 rule results:
     input:

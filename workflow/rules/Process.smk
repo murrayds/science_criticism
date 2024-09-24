@@ -5,6 +5,7 @@ rule agg_letters:
         letters=expand(rules.dl_gbq_letter_metadata.output, venue = get_venues(config)),
         impacts=expand(rules.dl_gbq_paper_impact.output, venue = get_venues(config)),
     output: AGG_LETTERS
+    conda: "../envs/python-minimal.yaml"
     script: "../scripts/processing/agg_letters.py"
 
 rule agg_nonletters:
@@ -12,6 +13,7 @@ rule agg_nonletters:
         letters=expand(rules.dl_gbq_letter_metadata.output, venue = get_venues(config)),
         impacts=expand(rules.dl_gbq_paper_impact.output, venue = get_venues(config)),
     output: AGG_NONLETTERS
+    conda: "../envs/python-minimal.yaml"
     script: "../scripts/processing/agg_nonletters.py"
         
 rule agg_fields:
@@ -22,6 +24,7 @@ rule agg_fields:
         ),
     params: FIELD_HIERARCHY
     output: AGG_FIELDS
+    conda: "../envs/python-minimal.yaml"
     script: "../scripts/processing/agg_fields.py"
 
 rule agg_dual_cite_trajectories:
@@ -31,6 +34,7 @@ rule agg_dual_cite_trajectories:
             venue = get_venues(config)
         )
     output: AGG_DUAL_CITE_TRAJECTORIES
+    conda: "../envs/python-minimal.yaml"
     script: "../scripts/processing/gather.py"
 
 rule calculate_paper_novelty:
@@ -40,6 +44,7 @@ rule calculate_paper_novelty:
         nonletters = rules.agg_nonletters.output,
         refs = rules.dl_gbq_target_journal_refs.output
     output: PAPER_NOVELTY_SCORES
+    conda: "../envs/python-minimal.yaml"
     params: 
         year_min = config["novelty"]["start_year"],
         year_max = config["novelty"]["end_year"] - 1

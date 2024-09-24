@@ -58,3 +58,35 @@ rule match_authors:
     output: MATCHED_AUTHORS
     conda: "../envs/python-minimal.yaml"
     script: "../scripts/processing/gather.py"
+
+rule agg_matched_paper_impact_diagnostics:
+    input: 
+        rules.agg_letters.output,
+        collect(
+            rules.match_papers_for_impact_comparison.output,
+            delay = config["matching"]["impact_delay"],
+            cite_tolerance = config["matching"]["cite_tolerance"],
+            year_tolerance = config["matching"]["year_tolerance"]
+        )
+    output: AGG_PAPER_IMPACT_MATCHED_DIAGNOSTICS
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/matching/agg_paper_impact_match_diagnostics.R"
+
+rule agg_matched_author_diagnostics:
+    input: 
+        rules.agg_letters.output,
+        collect(
+            rules.match_authors.output,
+            authorship = config["matching"]["authorship"],
+            cite_tolerance = config["matching"]["cite_tolerance"],
+            prod_tolerance = config["matching"]["productivity_tolerance"],
+        )
+    output: AGG_AUTHOR_MATCHED_DIAGNOSTICS
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/matching/agg_author_match_diagnostics.R"
+
+rule table_match_diagnostics:
+    input: rules.agg_matched_paper_impact_diagnostics.output
+    output: PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/tables/table_match_diagnostics.R"

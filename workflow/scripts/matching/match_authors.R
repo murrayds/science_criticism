@@ -56,6 +56,7 @@ df_matched_part <- lapply(c(kStartYear:kEndYear), function(event_year) {
 
   # If there are no authors to match this year, skip and return NULL
   if (count(treatment_authors) == 0) {
+    print("Slipping...not enough authors to examine")
     return(NULL)
   }
 
@@ -111,10 +112,10 @@ df_matched_part <- lapply(c(kStartYear:kEndYear), function(event_year) {
     summarize(
       total_prod = n(),
       career_age = first(career_age),
-      lead_prod = sum(author_position %in% c("f", "l")) / (max(Year) - min(Year)),
+      lead_prod = sum(author_position %in% c("f", "l")),
       # for productivity, divide by total years in range to get an average,
       # the number of years may be unbalanced so we want to smooth it out
-      frac_prod = sum(1 / num_authors) / (max(Year) - min(Year)),
+      frac_prod = sum(1 / num_authors),
       impact = mean(impact_3year_norm, na.rm = TRUE),
       impact_raw = mean(impact_3year_norm, na.rm = TRUE),
       field = first(DescTools::Mode(field, na.rm = TRUE)),
@@ -124,6 +125,8 @@ df_matched_part <- lapply(c(kStartYear:kEndYear), function(event_year) {
     mutate(
       # in case the impact is zero, replace with a very small number
       impact = ifelse(impact == 0, 0.00001, impact),
+      frac_prod = ifelse(frac_prod == 0, 0.00001, frac_prod),
+      lead_prod = ifelse(lead_prod == 0, 0.00001, lead_prod),
       impact_norm = log(impact) / log(mean(impact, na.rm = TRUE)),
       prod_norm = log(frac_prod) / log(mean(frac_prod, na.rm = TRUE)),
       lead_prod_norm = log(lead_prod) / log(mean(lead_prod, na.rm = TRUE)),
@@ -131,6 +134,7 @@ df_matched_part <- lapply(c(kStartYear:kEndYear), function(event_year) {
     ) %>%
     filter(
       !is.na(impact_norm),
+      !is.na(frac_prod),
       !is.na(field)
     ) %>%
     group_by(AuthorId) %>%
@@ -151,7 +155,7 @@ df_matched_part <- lapply(c(kStartYear:kEndYear), function(event_year) {
       caliper = c(
         impact_norm = cite_tolerance,
         frac_prod = prod_tolerance,
-        lead_prod_norm = 0.15
+        lead_prod_norm = 0.2
       ),
       ratio = 1, # 1 nearest match for each record
       discard = "both" # remove instances where a match could not be found
