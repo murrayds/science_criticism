@@ -69,7 +69,9 @@ PAIRWISE_AUTHOR_COMPARISON_PLOT = j(FIG_DIR, "pairwise_author_comparison_{metric
 FIELD_REPRESENTATION_PLOT = j(FIG_DIR, "field_representation_plot.png")
 
 MATCHING_DIAGNOSTIC_IMPACT_PLOT = j(FIG_DIR, "diagnostics", "matching_diagnostic_impact_plot.png")
-PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE = j(FIG_DIR, "tables", "match_{diagnostic}_parameters.txt")
+
+PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE = j(FIG_DIR, "tables", "match_papers_{diagnostic}_parameters.txt")
+AUTHOR_MATCH_DIAGNOSTICS_TABLE = j(FIG_DIR, "tables", "match_authors_{diagnostic}_{metric}_parameters.txt")
 
 CITE_RATIO_PLOT = j(FIG_DIR, "ratio_original_letter_citations.png")
 
@@ -103,7 +105,7 @@ NULL_ITERS = get_novelty_null_iters(config)
 
 
 AUTHORSHIP = config["matching"]["authorship"]
-AUTHOR_METRICS = ["frac_prod", "impact_raw"]
+AUTHOR_METRICS = ["prod", "citations"]
 
 rule all:
     input:
@@ -206,7 +208,8 @@ rule margins:
 
 rule tables:
     input:
-        expand(PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS)
+        expand(PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS),
+        expand(AUTHOR_MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS, metric=AUTHOR_METRICS)
 
 rule results:
     input:

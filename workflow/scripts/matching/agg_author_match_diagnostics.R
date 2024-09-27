@@ -9,6 +9,13 @@ match_files <- snakemake@input[c(2:length(snakemake@input))]
 
 # Either `frac_prod`` or `impact_raw``
 metric_to_show <- snakemake@wildcards[[1]]
+if (metric_to_show == "citations") {
+  metric_to_show <- "impact_raw"
+} else if (metric_to_show == "prod") {
+  metric_to_show <- "frac_prod"
+}
+
+
 # Hold the count of letters for each venue which is needed to calculate the
 # percentage of total matches
 letter_counts <- letters %>%
