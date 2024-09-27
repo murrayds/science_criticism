@@ -1,3 +1,16 @@
+rule author_marginal_probabilities:
+    input:
+        authors = rules.dl_gbq_author_profiles.output,
+        histories = rules.dl_gbq_career_histories.output,
+        matched = expand(
+            rules.match_papers_for_metric_density_comparison.output,
+            cite_tolerance = 0.05,
+            year_tolerance = 1
+        )
+    params: ELITE_UNIVERSITIES
+    output: AUTHOR_MARGINAL_PROBABILITIES
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/plotting/gen_author_marginal_probabilities.R"
 
 rule plot_impact_rank_histogram:
     input:

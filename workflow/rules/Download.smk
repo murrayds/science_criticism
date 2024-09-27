@@ -53,3 +53,9 @@ rule dl_gbq_dual_citation_trajectories:
     threads: workflow.cores * 0.5 if workflow.cores >= 2 else 1
     conda: "../envs/python-gbq.yaml"
     script: "../scripts/download/dl_gbq_dual_citation_trajectories.py"
+
+rule dl_gbq_author_profiles:
+    output: AUTHOR_PROFILES
+    threads: workflow.cores * 0.5 if workflow.cores >= 2 else 1
+    conda: "../envs/python-gbq.yaml"
+    script: "../scripts/download/dl_gbq_author_profiles.py"

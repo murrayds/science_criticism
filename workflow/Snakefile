@@ -17,12 +17,14 @@ PAPER_IMPACT = j(DL_DIR, "{venue}", "{venue}_paper_impact.csv")
 PAPER_FIELDS = j(DL_DIR, "{venue}", "{venue}_fields.csv")
 DUAL_CITE_TRAJECTORIES = j(DL_DIR, "{venue}", "{venue}_dual_cite_trajectories.csv"),
 
+ELITE_UNIVERSITIES = j(RAW_DIR, "elite_university_list.csv")
 
 JOURNAL_REFS = j(DL_DIR, "journal_refs", "journal_refs_{year}.csv")
 TARGET_JOURNAL_REFS = j(DL_DIR, "journal_refs", "target_journal_refs.csv")
 PAPER_FIELD_REFS = j(DL_DIR, "paper_field_refs.csv")
 PAPER_FIELD_CITES = j(DL_DIR, "paper_field_cites.csv")
 CAREER_HISTORIES = j(DL_DIR, "career_histories.csv")
+AUTHOR_PROFILES = j(DL_DIR, "author_profiles.csv")
 
 AGG_LETTERS = j(DERIVED_DIR, "agg", "agg_letters.csv")
 AGG_NONLETTERS = j(DERIVED_DIR, "agg", "agg_nonletters.csv")
@@ -48,6 +50,8 @@ AGG_PAPER_IMPACT_MATCHED_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_paper_impa
 _MATCHED_AUTHORS_SPLIT = j(DERIVED_DIR, "matched", "_{venue}_matched_{authorship}_authors_{cite_tolerance}impact_{prod_tolerance}prod.csv")
 MATCHED_AUTHORS = j(DERIVED_DIR, "matched", "matched_{authorship}_authors_{cite_tolerance}impact_{prod_tolerance}prod.csv")
 AGG_AUTHOR_MATCHED_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_author_match_{metric}_diagnostics.csv")
+
+AUTHOR_MARGINAL_PROBABILITIES = j(DERIVED_DIR, "margins", "margins_{authorship}author_{metric}.csv")
 
 IMPACT_RANK_HISTOGRAM = j(FIG_DIR, "impact_rank_histogram.png")
 IMPACT_LIKELIHOOD_SCATTER = j(FIG_DIR, "impact_likelihood_scatter.png")
@@ -160,7 +164,8 @@ rule download:
         AGG_LETTERS,
         AGG_NONLETTERS,
         AGG_FIELDS,
-        AGG_DUAL_CITE_TRAJECTORIES
+        AGG_DUAL_CITE_TRAJECTORIES,
+        AUTHOR_PROFILES
 
 rule novelty:
     input:
@@ -192,6 +197,10 @@ rule match:
         AGG_PAPER_IMPACT_MATCHED_DIAGNOSTICS,
         expand(AGG_AUTHOR_MATCHED_DIAGNOSTICS, metric = AUTHOR_METRICS)
         
+
+rule margins:
+    input:
+        expand(AUTHOR_MARGINAL_PROBABILITIES, authorship = AUTHORSHIP, metric = "gender")
 
 rule tables:
     input:
