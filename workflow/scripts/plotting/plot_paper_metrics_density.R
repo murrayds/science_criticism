@@ -325,7 +325,7 @@ p <- df_all %>%
   xlab("Percentile rank")
 
 
-ggsave(p, filename = snakemake@output[[1]], width = 8, height = 9, bg = "white")
+ggsave(p, filename = snakemake@output[[1]], width = 9, height = 9, bg = "white")
 
 #
 # Now, lets save the table to a separate file...
