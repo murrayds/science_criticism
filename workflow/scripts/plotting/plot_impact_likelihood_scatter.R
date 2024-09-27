@@ -88,9 +88,9 @@ p <- plotdata %>%
   scale_x_log10() +
   theme_criticism() +
   theme(
-    legend.position.inside = c(0.25, 0.75)
+    legend.position.inside = c(0.85, 0.22)
   ) +
   ylab("r(k)") +
   xlab("3-year citation impact")
 
-ggsave(p, filename = snakemake@output[[1]], width = 4, height = 4, bg = "white")
+ggsave(p, filename = snakemake@output[[1]], width = 6, height = 4, bg = "white")
