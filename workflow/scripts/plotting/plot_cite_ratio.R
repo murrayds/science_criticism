@@ -47,7 +47,7 @@ plotdata <- paper_cites %>%
     mu = mean(cites.frac),
     n = n()
   ) %>%
-  filter(citing_year_norm <= 10)
+  filter(citing_year_norm <= 8)
 
 # construct the plot
 p <- plotdata %>%
@@ -58,11 +58,12 @@ p <- plotdata %>%
     values = venue_colors()
   ) +
   scale_x_continuous(breaks = c(0:10)) +
+  scale_y_continuous(limits = c(0, 0.5)) +
   theme_criticism() +
   theme(
     legend.position = c(0.85, 0.85)
   ) +
-  xlab("Years since receipt of critical letter") +
+  xlab("Years since publication of critical letter") +
   ylab("impact(letter) / impact(original)")
 
-ggsave(p, filename = snakemake@output[[1]], width = 4, height = 4, bg = "white")
+ggsave(p, filename = snakemake@output[[1]], width = 7, height = 4, bg = "white")
