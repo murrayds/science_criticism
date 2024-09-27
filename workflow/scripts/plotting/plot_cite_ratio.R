@@ -10,9 +10,11 @@ traj <- read_csv(snakemake@input[[2]], col_types = cols())
 
 # For each paper, calculate citations recieved each year...
 paper_cites <- traj %>%
+  collapse_aps() %>%
   group_by(id, type, citing_year, venue) %>%
   summarize(
-    cites = length(unique(citing_id))
+    cites = length(unique(citing_id)),
+    .groups = "drop"
   )
 
 # Link each letter to its original
@@ -24,8 +26,8 @@ letter_cites <- paper_cites %>%
   select(-type) %>%
   rename(cites.letter = cites)
 
-# Construct plotdata. Merge letters with original, and then copmute ratio of 
-# citations received by each. 
+# Construct plotdata. Merge letters with original, and then copmute ratio of
+# citations received by each.
 plotdata <- paper_cites %>%
   filter(type == "original") %>%
   rename(cites.original = cites) %>%

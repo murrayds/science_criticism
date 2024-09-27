@@ -5,8 +5,21 @@ venue_levels <- function() {
     "Science",
     "PNAS",
     "PRL",
-    "NEJM",
-    "Geology"
+    "Other APS"
+  )
+}
+
+venue_levels_all <- function() {
+  c(
+    "Nature",
+    "Science",
+    "PNAS",
+    "PRL",
+    "PR-A",
+    "PR-B",
+    "PR-C",
+    "PR-D",
+    "PR-E"
   )
 }
 
@@ -40,8 +53,7 @@ venue_colors <- function() {
     "Science" = "firebrick",
     "PNAS" = "goldenrod",
     "PRL" = "steelblue",
-    "NEJM" = "darkviolet",
-    "Geology" = "coral4"
+    "Other APS" = "lightblue"
   )
 }
 

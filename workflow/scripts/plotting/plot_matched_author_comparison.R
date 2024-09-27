@@ -6,7 +6,8 @@ suppressPackageStartupMessages(library(ggplot2))
 source("scripts/common.R")
 source("scripts/plotting/theme.R")
 
-df <- read_csv(snakemake@input[[1]], col_types = cols())
+df <- read_csv(snakemake@input[[1]], col_types = cols()) %>%
+  collapse_aps()
 
 # Get the metric of interest
 variable_name <- snakemake@wildcards[[1]]

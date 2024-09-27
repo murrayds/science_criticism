@@ -4,6 +4,8 @@ suppressPackageStartupMessages(library(margins))
 suppressPackageStartupMessages(library(sandwich))
 suppressPackageStartupMessages(library(lmtest))
 
+source("scripts/common.R")
+
 authors <- read_csv(snakemake@input[[1]], col_types = cols())
 histories <- read_csv(snakemake@input[[2]], col_types = cols())
 matched <- read_csv(snakemake@input[[3]], col_types = cols())
@@ -59,20 +61,16 @@ targeted_df <- matched %>%
     seniority = ifelse(career_age <= 10, "Junior", "Senior"),
     seniority = factor(seniority, levels = c("Junior", "Senior")),
     year = year - min(year),
-    num_authors = cut(num_authors, c(0, 1, 5, 20), include_lowest = TRUE),
-    venue_group = ifelse(
-      venue %in% c("PR-A", "PR-B", "PR-C", "PR-D", "PR-E"),
-      "Other APS",
-      venue
-    )
-  )
+    num_authors = cut(num_authors, c(0, 1, 5, 20), include_lowest = TRUE)
+  ) %>%
+  collapse_aps()
 
 venues <- c("Nature", "Science", "PNAS", "PRL", "Other APS")
 margins_dfs <- lapply(venues, function(v) {
   model <- glm(
     type ~
       gender + seniority + elite + num_authors + impact + year,
-    data = targeted_df %>% filter(venue_group == v),
+    data = targeted_df %>% filter(venue == v),
     family = binomial
   )
 
@@ -93,40 +91,19 @@ margins_dfs <- lapply(venues, function(v) {
     variable = "elite"
   )
 
-  # coef_se_clustered <- coeftest(
-  #   model,
-  #   vcov = vcovCL(model, cluster = ~match.group)
-  # )
-
-  # Extract the coefficients and standard errors from the coeftest output
-  # coef_estimates <- coef_se_clustered[, 1]  # Coefficients
-  # coef_se <- coef_se_clustered[, 2]         # Clustered standard errors
-
-  # se <- coef_se[which(names(coef_estimates) == "genderFemale")]
   margins_df_gender <- as.data.frame(summary(marginal_effects_gender)) %>%
-    #select(factor, AME) %>%
     mutate(
-      venue = v,
-      #lower_ci = AME - 1.96 * se,
-      #upper_ci = AME + 1.96 * se
+      venue = v
     )
 
-  # se <- coef_se[which(names(coef_estimates) == "senioritySenior")]
   margins_df_seniority <- as.data.frame(summary(marginal_effects_seniority)) %>%
-    #select(factor, AME) %>%
     mutate(
       venue = v,
-      #lower_ci = AME - 1.96 * se,
-     # upper_ci = AME + 1.96 * se
     )
 
-  # se <- coef_se[which(names(coef_estimates) == "eliteElite")]
   margins_df_elite <- as.data.frame(summary(marginal_effects_elite)) %>%
-    #select(factor, AME) %>%
     mutate(
-      venue = v,
-      #lower_ci = AME - 1.96 * se,
-      #upper_ci = AME + 1.96 * se
+      venue = v
     )
 
   df_part <- rbind(

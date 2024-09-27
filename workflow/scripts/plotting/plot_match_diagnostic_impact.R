@@ -3,6 +3,7 @@ suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(ggplot2))
 
 source("scripts/plotting/theme.R")
+source("scripts/common.R")
 
 df_matched <- read_csv(snakemake@input[[1]], col_types = cols()) %>%
   mutate(

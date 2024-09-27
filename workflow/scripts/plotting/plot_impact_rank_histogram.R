@@ -5,7 +5,8 @@ suppressPackageStartupMessages(library(ggplot2))
 source("scripts/plotting/theme.R")
 source("scripts/common.R")
 
-df <- load_aggregate_df(snakemake@input[[1]], snakemake@input[[2]])
+df <- load_aggregate_df(snakemake@input[[1]], snakemake@input[[2]]) %>%
+  collapse_aps()
 fields <- read_csv(snakemake@input[[3]], col_types = cols())
 
 # Break into 6 discrete time periods. Merge in level 1 (granular)

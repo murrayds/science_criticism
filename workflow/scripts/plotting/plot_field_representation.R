@@ -5,7 +5,11 @@ suppressPackageStartupMessages(library(ggplot2))
 source("scripts/plotting/theme.R")
 source("scripts/common.R")
 
-df <- load_aggregate_df(snakemake@input[[1]], snakemake@input[[2]])
+df <- load_aggregate_df(snakemake@input[[1]], snakemake@input[[2]]) %>%
+  collapse_aps()
+
+print(table(df$venue))
+print(venue_colors())
 fields <- read_csv(snakemake@input[[3]], col_types = cols())
 
 # First, format the fields dataframe. Collapse to

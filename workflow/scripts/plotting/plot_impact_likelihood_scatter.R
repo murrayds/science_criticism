@@ -5,7 +5,11 @@ suppressPackageStartupMessages(library(ggplot2))
 source("scripts/plotting/theme.R")
 source("scripts/common.R")
 
-df <- load_aggregate_df(snakemake@input[[1]], snakemake@input[[2]])
+df <- load_aggregate_df(snakemake@input[[1]], snakemake@input[[2]]) %>%
+  collapse_aps()
+
+print(table(df$venue))
+print(venue_colors())
 
 # Construct the plot data
 plotdata <- df %>%
@@ -79,6 +83,7 @@ p <- plotdata %>%
     linewidth = 0.65
   ) +
   scale_color_manual(labels = stats, values = venue_colors()) +
+  facet_wrap(~venue) +
   scale_y_log10() +
   scale_x_log10() +
   theme_criticism() +

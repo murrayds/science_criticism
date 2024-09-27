@@ -1,6 +1,7 @@
 # Now, how do we get the Z-scores for particular papers? I think we probably need a separate file for our focus...???
 import pickle 
 from itertools import combinations
+from collections import defaultdict
 
 import pandas as pd
 import numpy as np

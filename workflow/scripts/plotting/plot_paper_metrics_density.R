@@ -48,7 +48,7 @@ ref_diversity <- refs %>%
   # Consdier only papers with at least 10 references...
   filter(length(unique(PaperReferenceId)) >= 10) %>%
   group_by(period, venue, type, id, field) %>%
-  summarize(count = n()) %>%
+  summarize(count = n(), .groups = "drop") %>%
   group_by(id) %>%
   summarize(
     # use reverse simpsons for consistent interpretation
@@ -63,7 +63,7 @@ cite_diversity <- cites %>%
   # Citations are counted within 5 years of the cited paper's publication
   filter(length(unique(CitingPaperId)) > 10) %>% # require at least 10 citations
   group_by(period, venue, type, id, field) %>%
-  summarize(count = n()) %>%
+  summarize(count = n(), .groups = "drop") %>%
   group_by(id) %>%
   summarize(
     # use reverse simpsons for consistent interpretation
@@ -72,7 +72,7 @@ cite_diversity <- cites %>%
 
 #
 # REFERENCE DIVERSITY DATA
-# 
+#
 
 # Calculate percentile ranks by venue, period, and level0 field
 # for reference diversity
@@ -84,12 +84,12 @@ plotdata_ref_diversity <- df_byfield %>%
   ) %>%
   # When multiple fields are present, use mean rank...
   group_by(venue, type, id) %>%
-  summarize(rank = mean(rank, na.rm = TRUE)) %>%
+  summarize(rank = mean(rank, na.rm = TRUE), .groups = "drop") %>%
   mutate(metric = "Reference Diversity")
 
 #
 # CITATION DIVERSITY DATA
-# 
+#
 
 # Calculate percentile ranks by venue, period, and level0 field
 # for citation diversity
@@ -141,6 +141,7 @@ plotdata_impact <- df_byfield %>%
   ) %>%
   mutate(metric = "Impact")
 
+plotdata_ref_diversity %>% filter(venue == "PR-A")
 # Aggregate all individual plotdata_* objects into a single dataframe
 df_all <- data.table::rbindlist(
   list(
@@ -168,13 +169,14 @@ df_all <- data.table::rbindlist(
         "Novelty"
       ),
     )
-  )
+  ) %>%
+  collapse_aps()
 
 #
 # MATCHING DATA
-# 
+#
 
-# Identify records correponding to matched papers, with a similar 
+# Identify records correponding to matched papers, with a similar
 # field, year, and citation impact to the papers targeted by criticism
 plotdata_matched <- df_all %>%
   filter(type == "article") %>%
@@ -323,7 +325,7 @@ p <- df_all %>%
   xlab("Percentile rank")
 
 
-ggsave(p, filename = snakemake@output[[1]], width = 6, height = 9, bg = "white")
+ggsave(p, filename = snakemake@output[[1]], width = 8, height = 9, bg = "white")
 
 #
 # Now, lets save the table to a separate file...

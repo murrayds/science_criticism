@@ -46,7 +46,7 @@ load_aggregate_df <- function(letter_path, nonletter_path) {
     fill = TRUE
   ) %>%
     mutate(
-      venue = factor(venue, levels = venue_levels()),
+      venue = factor(venue, levels = venue_levels_all()),
       type = factor(type)
     )
 
@@ -79,4 +79,19 @@ perform_matching <- function(df, cite_tolerance, year_tolerance) {
 
   # Extract the matched dataset
   return(match.data(match))
+}
+
+collapse_aps <- function(df) {
+  df %>%
+    mutate(venue = as.character(venue)) %>%
+    mutate(
+      venue = ifelse(
+        venue %in% c("PR-A", "PR-B", "PR-C", "PR-D", "PR-E"),
+        "Other APS",
+        venue
+      )
+    ) %>%
+    filter(venue %in% venue_levels()) %>%
+    mutate(venue = factor(venue, levels = venue_levels()))
+    
 }
