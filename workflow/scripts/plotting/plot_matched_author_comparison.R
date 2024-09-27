@@ -21,7 +21,7 @@ if (variable_name == "citations") {
 df_matched <- df %>%
   rename(var = variable_name) %>%
   rowwise() %>%
-  mutate(venue = factor(venue, levels = venue_levels())) %>%
+  mutate(venue = factor(venue, levels = rev(venue_levels()))) %>%
   select(AuthorId, venue, treat, match.group, partition, var) %>%
   pivot_wider(names_from = partition, values_from = var) %>%
   mutate(change = after / before) %>%
