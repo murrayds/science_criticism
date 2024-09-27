@@ -9,8 +9,13 @@ source("scripts/plotting/theme.R")
 df <- read_csv(snakemake@input[[1]], col_types = cols()) %>%
   collapse_aps()
 
-# Get the metric of interest
+# Either `frac_prod`` or `impact_raw``
 variable_name <- snakemake@wildcards[[1]]
+if (variable_name == "citations") {
+  variable_name <- "impact_raw"
+} else if (variable_name == "prod") {
+  variable_name <- "frac_prod"
+}
 
 
 df_matched <- df %>%
@@ -79,13 +84,14 @@ plottests <- plotdata %>%
 
 p <- plotdata %>%
   left_join(plottests, by = "venue") %>%
-  ggplot(aes(x = venue, y = mean_diff, color = venue)) +
+  ggplot(aes(x = mean_diff, y = venue, color = venue)) +
   geom_point(size = 4) +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(aes(xmin = lower, xmax = upper), width = 0) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
   geom_text(
-    aes(label = signif, y = upper),
-    nudge_y = 0.075,
+    aes(label = signif, x = upper),
+    nudge_x = 0.075,
+    nudge_y = -0.0575,
     size = 6,
   ) +
   scale_color_manual(values = venue_colors(), guide = "none") +

@@ -34,7 +34,7 @@ tests <- df_matched %>%
 
 plotdata <- df_matched %>%
   mutate(
-    venue = factor(venue, levels = venue_levels()),
+    venue = factor(venue, levels = rev(venue_levels())),
     type = factor(type, levels = c("Treatment", "Control"))
   ) %>%
   group_by(venue, type) %>%
@@ -63,18 +63,19 @@ plottests <- plotdata %>%
     )
   )
 
+print(head(plotdata))
 # Now construct the plot object
 pooled_plot <- plotdata %>%
-  ggplot(aes(x = venue, y = mu_growth, color = venue, shape = type)) +
+  ggplot(aes(x = mu_growth, y = venue, color = venue, shape = type)) +
   geom_point(position = position_dodge(width = 0.5), size = 4) +
   geom_errorbar(
-    aes(ymin = lower, ymax = upper),
+    aes(xmin = lower, xmax = upper),
     width = 0,
     position = position_dodge(width = 0.5)
   ) +
   geom_text(
     data = plottests,
-    aes(label = signif, y = mx),
+    aes(label = signif, x = mx),
     nudge_y = 0.10,
     size = 6
   ) +
@@ -93,32 +94,35 @@ pairwise_plot <- df_matched %>%
   arrange(venue, match.group, type) %>%
   group_by(venue, match.group) %>%
   summarize(
-    diff = last(growth) - first(growth)
+    diff = last(growth) - first(growth),
+    .groups = "drop"
   ) %>%
   group_by(venue) %>%
   summarize(
     mean_diff = mean(diff),
     interval = 1.96 * sd(diff) / sqrt(n()),
     upper = mean_diff + interval,
-    lower = mean_diff - interval
+    lower = mean_diff - interval,
+    .groups = "drop"
   ) %>%
   mutate(
-    venue = factor(venue, levels = venue_levels()),
+    venue = factor(venue, levels = rev(venue_levels())),
   ) %>%
   left_join(plottests, by = "venue") %>%
-  ggplot(aes(x = venue, y = mean_diff, color = venue)) +
+  ggplot(aes(x = mean_diff, y = venue, color = venue)) +
   geom_point(size = 4) +
   geom_errorbar(
-    aes(ymin = lower, ymax = upper),
+    aes(xmin = lower, xmax = upper),
     width = 0
   ) +
   geom_text(
-    aes(label = signif, y = upper),
-    nudge_y = 0.075,
+    aes(label = signif, x = upper),
+    nudge_x = 0.075,
+    nudge_y = -0.0575,
     size = 6
   ) +
   scale_color_manual(values = venue_colors(), guide = FALSE) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
   theme_criticism() +
   theme(
     axis.title.x = element_blank()

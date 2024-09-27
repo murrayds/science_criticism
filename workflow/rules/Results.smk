@@ -72,7 +72,7 @@ rule plot_impact_comparison:
         POOLED_IMPACT_COMPARISON_PLOT,
         PAIRWISE_IMPACT_COMPARISON_PLOT
     conda: "../envs/r-conda.yaml"
-    script: "../scripts/plotting/plot_impact_comparison.R"
+    script: "../scripts/plotting/plot_paper_impact_comparison.R"
 
 rule plot_match_diagnostic_impact:
     input:
