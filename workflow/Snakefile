@@ -51,7 +51,7 @@ _MATCHED_AUTHORS_SPLIT = j(DERIVED_DIR, "matched", "_{venue}_matched_{authorship
 MATCHED_AUTHORS = j(DERIVED_DIR, "matched", "matched_{authorship}_authors_{cite_tolerance}impact_{prod_tolerance}prod.csv")
 AGG_AUTHOR_MATCHED_DIAGNOSTICS = j(DERIVED_DIR, "matched", "agg_author_match_{metric}_diagnostics.csv")
 
-AUTHOR_MARGINAL_PROBABILITIES = j(DERIVED_DIR, "margins", "margins_{authorship}author_{metric}.csv")
+AUTHOR_MARGINAL_PROBABILITIES = j(DERIVED_DIR, "margins", "margins_{authorship}author.csv")
 
 IMPACT_RANK_HISTOGRAM = j(FIG_DIR, "impact_rank_histogram.png")
 IMPACT_LIKELIHOOD_SCATTER = j(FIG_DIR, "impact_likelihood_scatter.png")
@@ -72,6 +72,8 @@ MATCHING_DIAGNOSTIC_IMPACT_PLOT = j(FIG_DIR, "diagnostics", "matching_diagnostic
 PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE = j(FIG_DIR, "tables", "match_{diagnostic}_parameters.txt")
 
 CITE_RATIO_PLOT = j(FIG_DIR, "ratio_original_letter_citations.png")
+
+PAPER_AUTHOR_DEMOGRAPHIC_AME = j(FIG_DIR, "paper_{authorship}author_demographic_ame.png")
 
 ####################
 # INCLUDES
@@ -200,7 +202,7 @@ rule match:
 
 rule margins:
     input:
-        expand(AUTHOR_MARGINAL_PROBABILITIES, authorship = AUTHORSHIP, metric = "gender")
+        expand(AUTHOR_MARGINAL_PROBABILITIES, authorship = AUTHORSHIP)
 
 rule tables:
     input:
@@ -223,4 +225,8 @@ rule results:
             metric = AUTHOR_METRICS,
             authorship = AUTHORSHIP
         ),
-        CITE_RATIO_PLOT
+        CITE_RATIO_PLOT,
+        expand(
+            PAPER_AUTHOR_DEMOGRAPHIC_AME,
+            authorship = AUTHORSHIP
+        )

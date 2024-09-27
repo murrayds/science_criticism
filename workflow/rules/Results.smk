@@ -117,3 +117,9 @@ rule plot_cite_ratio:
     output: CITE_RATIO_PLOT
     conda: "../envs/r-conda.yaml"
     script: "../scripts/plotting/plot_cite_ratio.R"
+
+rule paper_author_demographic_ame:
+    input: rules.author_marginal_probabilities.output
+    output: PAPER_AUTHOR_DEMOGRAPHIC_AME
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/plotting/plot_paper_author_demographics_ame.R"
