@@ -59,3 +59,9 @@ rule dl_gbq_author_profiles:
     threads: workflow.cores * 0.5 if workflow.cores >= 2 else 1
     conda: "../envs/python-gbq.yaml"
     script: "../scripts/download/dl_gbq_author_profiles.py"
+
+rule dl_gbq_sciscinet_features:
+    output: SCISCINET_FEATURES
+    threads: workflow.cores * 0.5 if workflow.cores >= 2 else 1
+    conda: "../envs/python-gbq.yaml"
+    script: "../scripts/download/dl_gbq_sciscinet_features.py"
