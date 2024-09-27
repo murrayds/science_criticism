@@ -1,0 +1,145 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+
+# Load the leiden rankings...
+leiden <- read_excel("/Users/d.murray/Documents/science_criticism/data/raw/CWTS Leiden Ranking 2023.xlsx", sheet = 2)
+
+head(leiden)
+```
+
+I assigned these GRID IDs manually...
+```{r}
+grid_ids <- c(
+  "Rockefeller University" = "grid.134907.8",
+  "Massachusetts Institute of Technology" = "grid.116068.8",
+  "Harvard University" = "grid.38142.3c",
+  "Stanford University" = "grid.168010.e",
+  "Princeton University" = "grid.16750.35",
+  "University of California, Berkeley" = "grid.47840.3f",
+  "University of California, San Francisco" = "grid.266102.1",
+  "California Institute of Technology" = "grid.20861.3d",
+  "University of Texas Southwestern Medical Center at Dallas" = "grid.267313.2",
+  "University of California, Santa Barbara" = "grid.133342.4",
+  "University of California, Santa Cruz" = "grid.205975.c",
+  "University of Chicago" = "grid.170205.1",
+  "Yale University" = "grid.47100.32",
+  "University of Washington, Seattle" = "grid.34477.33",
+  "Columbia University" = "grid.21729.3f",
+  "University of California, San Diego" = "grid.266100.3",
+  "Duke University" = "grid.26009.3d",
+  "London School of Hygiene & Tropical Medicine" = "grid.8991.9",
+  "University of Texas at Dallas" = "grid.462968.7",
+  "Weizmann Institute of Science" = "grid.13992.30",
+  "Rice University" = "grid.21940.3e",
+  "University of Pennsylvania" = "grid.25879.31",
+  "University of Colorado, Boulder" = "grid.266190.a",
+  "University of Oxford" = "grid.4991.5",
+  "University of California, Los Angeles" = "grid.19006.3e",
+  "Northwestern University" = "grid.443107.5",
+  "Washington University in St. Louis" = "grid.4367.6",
+  "Dartmouth College" = "grid.254880.3",
+  "Johns Hopkins University" = "grid.21107.35",
+  "Emory University" = "grid.189967.8",
+  "Oregon Health & Science University" = "grid.5288.7",
+  "Cornell University" = "grid.5386.8",
+  "New York University" = "grid.137628.9",
+  "Eidgenössische Technische Hochschule Zürich" = "grid.5801.c",
+  "Imperial College London" = "grid.7445.2",
+  "Boston University" = "grid.189504.1",
+  "University of Massachusetts Medical School" = "grid.168645.8",
+  "Carnegie Mellon University" = "grid.147455.6",
+  "Albert Einstein College of Medicine" = "grid.251993.5",
+  "Ecole Polytechnique Fédérale de Lausanne" = "grid.5333.6",
+  "University of Cambridge" = "grid.5335.0",
+  "Icahn School of Medicine, Mount Sinai" = "grid.59734.3c",
+  "University of Michigan" = "grid.214458.e",
+  "University of Texas Health Science Center at Houston" = "grid.267308.8",
+  "University of Lausanne" = "grid.9851.5",
+  "University of North Carolina, Chapel Hill" = "grid.10698.36",
+  "Tufts University" = "grid.429997.8",
+  "Vita-Salute San Raffaele University" = "grid.15496.3f",
+  "Baylor College of Medicine" = "grid.39382.33",
+  "University of Colorado, Denver" = "grid.241116.1",
+  "St George's, University of London" = "grid.264200.2",
+  "University College London" = "grid.83440.3b",
+  "University of Bristol" = "grid.5337.2",
+  "Erasmus University Rotterdam" = "grid.6906.9",
+  "University of Rochester" = "grid.16416.34",
+  "King's College London" = "grid.13097.3c",
+  "University of California, Irvine" = "grid.266093.8",
+  "University of Iceland" = "grid.14013.37",
+  "Politecnico di Bari" = "grid.4466.0",
+  "Queen Mary University of London" = "grid.4868.2",
+  "Shandong University of Science and Technology" = "grid.412508.a",
+  "Humanitas University" = "grid.452490.e",
+  "Duy Tan University" = "grid.444918.4",
+  "University of Exeter" = "grid.8391.3",
+  "University of Glasgow" = "grid.8756.c",
+  "University of Dundee" = "grid.8241.f",
+  "University of East Anglia" = "grid.8273.e",
+  "University of Montana" = "grid.253613.0",
+  "Changsha University of Science and Technology" = "grid.440669.9"
+)
+
+grid_ids_df <- (as.data.frame(grid_ids)) %>%
+  tibble::rownames_to_column("University") %>%
+  rename(`grid_id` = `grid_ids`)
+
+
+# Save the output...
+write_csv(
+  grid_ids_df, 
+  file = "/Users/d.murray/Documents/science_criticism/data/raw/leiden_rankings_grid_ids.csv"
+)
+```
+
+
+```{r}
+grid_ids_df <- read_csv(
+  file = "/Users/d.murray/Documents/science_criticism/data/raw/leiden_rankings_grid_ids.csv"
+)
+
+select_universities <- leiden %>%
+  filter(
+    Field == "All sciences",
+    Frac_counting == 0
+  ) %>%
+  select(University, Period, impact_P, PP_top5) %>%
+  filter(impact_P > 1000) %>%
+  group_by(Period) %>%
+  distinct(University, .keep_all = TRUE) %>%
+  arrange(desc(PP_top5)) %>%
+  mutate(rank = row_number()) %>%
+  ungroup() %>%
+  arrange(Period, (rank)) %>%
+  filter(rank <= 30) %>%
+  distinct(University, .keep_all = TRUE) %>%
+  select(University, rank) %>%
+  left_join(grid_ids_df, by = "University")
+
+elite_universities <- leiden %>%
+  filter(
+    Field == "All sciences",
+    Frac_counting == 0
+  ) %>%
+  inner_join(select_universities, by = "University") %>%
+  select(University, grid_id, Period, rank) %>%
+  rowwise() %>%
+  mutate(
+    year = as.numeric(substring(Period, 1, 4)),
+  ) %>%
+  select(University, grid_id, year, rank)
+
+write_csv(
+  elite_universities,
+  file = "/Users/d.murray/Documents/science_criticism/data/raw/elite_university_list.csv"
+)
+```
+
