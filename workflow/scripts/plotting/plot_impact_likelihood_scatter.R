@@ -8,9 +8,6 @@ source("scripts/common.R")
 df <- load_aggregate_df(snakemake@input[[1]], snakemake@input[[2]]) %>%
   collapse_aps()
 
-print(table(df$venue))
-print(venue_colors())
-
 # Construct the plot data
 plotdata <- df %>%
   # For each venue, split into logarithmically-sized bins using the
