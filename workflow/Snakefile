@@ -43,6 +43,8 @@ AGG_NOVELTY_ZSCORES = j(DERIVED_DIR, "novelty", "agg_journal_zscores.pickle")
 PAPER_NOVELTY_SCORES = j(DERIVED_DIR, "novelty", "paper_zscores.csv")
 
 
+COUNTS_TABLE = j(FIG_DIR, "tables", "counts_table.txt")
+
 MATCHED_PAPERS_FOR_METRIC_DENSITY_COMPARISON = j(DERIVED_DIR, "matched", "matched_papers_metricdensity_{cite_tolerance}impact_{year_tolerance}year.csv")
 
 _MATCHED_PAPERS_FOR_IMPACT_COMPARISON_SPLIT = j(DERIVED_DIR, "matched", "_{venue}_matched_papers_stage1_{delay}delay_{cite_tolerance}impact_{year_tolerance}year.csv")
@@ -214,6 +216,7 @@ rule margins:
 
 rule tables:
     input:
+        COUNTS_TABLE,
         expand(PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS),
         expand(AUTHOR_MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS, metric=AUTHOR_METRICS)
 

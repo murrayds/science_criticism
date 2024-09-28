@@ -49,6 +49,13 @@ rule plot_paper_metrics_density:
     conda: "../envs/r-conda.yaml"
     script: "../scripts/plotting/plot_paper_metrics_density.R"
 
+rule table_counts:
+    input:
+        rules.agg_letters.output,
+        rules.agg_nonleters.output
+    output: TABLE_COUNTS 
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/tables/table_counts.R"
 
 rule table_fit_by_venue:
     input: 
