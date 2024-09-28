@@ -123,3 +123,25 @@ rule paper_author_demographic_ame:
     output: PAPER_AUTHOR_DEMOGRAPHIC_AME
     conda: "../envs/r-conda.yaml"
     script: "../scripts/plotting/plot_paper_author_demographics_ame.R"
+
+rule paper_tweet_distribution:
+    input:
+        rules.agg_letters.output,
+        rules.agg_nonletters.output,
+        rules.dl_gbq_sciscinet_features.output
+    output: PAPER_TWEET_DISTRIBUTION
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/plotting/plot_paper_tweet_distribution.R"
+
+rule paper_news_tweet_distribution:
+    input:
+        expand(
+            rules.match_papers_for_metric_density_comparison.output,
+            cite_tolerance = 0.05,
+            year_tolerance = 3
+        ),
+        rules.dl_gbq_sciscinet_features.output
+    output: PAPER_NEWS_TWEET_PROPORTION
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/plotting/plot_paper_news_tweet_proportion.R"
+    

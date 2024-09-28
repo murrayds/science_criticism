@@ -79,6 +79,9 @@ CITE_RATIO_PLOT = j(FIG_DIR, "ratio_original_letter_citations.png")
 
 PAPER_AUTHOR_DEMOGRAPHIC_AME = j(FIG_DIR, "paper_{authorship}author_demographic_ame.png")
 
+PAPER_TWEET_DISTRIBUTION = j(FIG_DIR, "paper_tweet_distribution.png")
+PAPER_NEWS_TWEET_PROPORTION = j(FIG_DIR, "paper_news_tweet_proportion.png")
+
 ####################
 # INCLUDES
 ####################
@@ -235,4 +238,6 @@ rule results:
         expand(
             PAPER_AUTHOR_DEMOGRAPHIC_AME,
             authorship = AUTHORSHIP
-        )
+        ),
+        PAPER_TWEET_DISTRIBUTION,
+        PAPER_NEWS_TWEET_PROPORTION
