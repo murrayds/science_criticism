@@ -55,6 +55,7 @@ p <- plotdata %>%
   theme_criticism() +
   theme(
     axis.title.y = element_blank(),
+    panel.spacing = unit(1.5, "lines")
   ) +
   xlab("Proportion of all papers")
 
