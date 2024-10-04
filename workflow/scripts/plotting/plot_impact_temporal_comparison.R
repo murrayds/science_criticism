@@ -169,16 +169,6 @@ plotdata_final <- plotdata %>%
         "% of letter impact\nvs targeted impact",
         "% Target citations\nthat also cite letter"
       )
-    ),
-    venue = factor(
-      venue,
-      labels = c(
-        "Nature",
-        "Science",
-        "PNAS",
-        "PRL",
-        "Other\nAPS"
-      )
     )
   ) %>%
   filter(
@@ -194,8 +184,7 @@ p <- plotdata_final %>%
   facet_grid(metric ~ venue, scale = "free_y", switch = "y") +
   scale_color_manual(values = venue_colors()) +
   scale_y_continuous(
-    position = "right",
-    breaks = c(0, 1, 2)
+    position = "right"
   ) +
   scale_x_continuous(
     breaks = c(0, 2, 4, 6, 8)

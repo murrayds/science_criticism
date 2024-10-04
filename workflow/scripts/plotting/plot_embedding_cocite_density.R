@@ -126,7 +126,7 @@ p <- plotdata %>%
     panel.grid = element_blank(),
     strip.text = element_text(hjust = 0),
     axis.title.y = element_blank(),
-    panel.spacing.y = unit(0.50, "cm", data = NULL),
+    panel.spacing.x = unit(0.30, "cm", data = NULL),
     legend.position = "none"
   ) +
   xlab("Percentile rank")

@@ -283,6 +283,7 @@ p <- df_all %>%
   ggplot(aes(x = rank,  fill = venue)) +
   # Add a vertical line to mark the median for easier viewing
   geom_vline(xintercept = 0.5, color = "lightgrey", linewidth = 0.25) +
+  geom_hline(yintercept = 1.0, color = "lightgrey", linewidth = 0.25) +
   # The main density
   geom_density(alpha = 0.2) +
   # A density for the matched records...
@@ -312,6 +313,7 @@ p <- df_all %>%
   ) +
   scale_y_continuous(
     limits = c(0, 2.2),
+    breaks = c(0, 1, 2),
     position = "right",
     expand = c(0, 0)
   ) +
@@ -325,7 +327,13 @@ p <- df_all %>%
   xlab("Percentile rank")
 
 
-ggsave(p, filename = snakemake@output[[1]], width = 9, height = 9, bg = "white")
+ggsave(
+  p,
+  filename = snakemake@output[[1]],
+  width = 9.5,
+  height = 8.5,
+  bg = "white"
+)
 
 #
 # Now, lets save the table to a separate file...
