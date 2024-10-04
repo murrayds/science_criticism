@@ -169,6 +169,16 @@ plotdata_final <- plotdata %>%
         "% of letter impact\nvs targeted impact",
         "% Target citations\nthat also cite letter"
       )
+    ),
+    venue = factor(
+      venue,
+      labels = c(
+        "Nature",
+        "Science",
+        "PNAS",
+        "PRL",
+        "Other\nAPS"
+      )
     )
   ) %>%
   filter(
@@ -185,6 +195,7 @@ p <- plotdata_final %>%
   scale_color_manual(values = venue_colors()) +
   scale_y_continuous(
     position = "right",
+    breaks = c(0, 1, 2)
   ) +
   scale_x_continuous(
     breaks = c(0, 2, 4, 6, 8)
@@ -193,6 +204,7 @@ p <- plotdata_final %>%
   theme(
     legend.position = "none",
     strip.text.y.left = element_text(angle = 0, hjust = 0),
+    strip.text.x = element_text(hjust = 0),
     axis.title.y = element_blank(),
     panel.spacing.x = unit(0.30, "cm", data = NULL)
   ) +
@@ -203,6 +215,6 @@ ggsave(
   p,
   filename = snakemake@output[[1]],
   width = 7.5,
-  height = 4,
+  height = 3.5,
   bg = "white"
 )

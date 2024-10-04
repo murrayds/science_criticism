@@ -66,3 +66,13 @@ rule title_embedding_similarities:
     output: TITLE_EMBEDDING_SIMILARITIES
     conda: "../envs/python-minimal.yaml"
     script: "../scripts/processing/embed_titles_and_calculate_similarity.py"
+
+rule agg_paper_title_similarities:
+    input: 
+        emb = expand(
+            rules.title_embedding_similarities.output,
+            venue = get_venues(config)
+        )
+    output: AGG_TITLE_EMBEDDING_SIMILARITIES
+    conda: "../envs/python-minimal.yaml"
+    script: "../scripts/processing/gather.py"

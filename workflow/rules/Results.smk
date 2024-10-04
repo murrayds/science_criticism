@@ -169,3 +169,14 @@ rule paper_news_tweet_distribution:
     conda: "../envs/r-conda.yaml"
     script: "../scripts/plotting/plot_paper_news_tweet_proportion.R"
     
+rule embedding_cocite_density_plot:
+    input:
+        letters = rules.agg_letters.output,
+        titles = rules.agg_paper_titles.output,
+        traj = rules.agg_dual_cite_trajectories.output,
+        emb = rules.agg_paper_title_similarities.output
+    output:
+        plot = EMBEDDING_COCITE_DENSITY_PLOT,
+        table = EMBEDDING_COCITE_DENSITY_PLOT_TESTS_TABLE
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/plotting/plot_embedding_cocite_density.R"

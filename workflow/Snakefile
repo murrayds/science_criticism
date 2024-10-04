@@ -45,6 +45,7 @@ AGG_NOVELTY_ZSCORES = j(DERIVED_DIR, "novelty", "agg_journal_zscores.pickle")
 PAPER_NOVELTY_SCORES = j(DERIVED_DIR, "novelty", "paper_zscores.csv")
 
 TITLE_EMBEDDING_SIMILARITIES = j(DERIVED_DIR, "embedding", "{venue}_title_embedding_similarities.csv")
+AGG_TITLE_EMBEDDING_SIMILARITIES = j(DERIVED_DIR, "embedding", "agg_title_embedding_similarities.csv")
 
 COUNTS_TABLE = j(FIG_DIR, "tables", "counts_table.txt")
 
@@ -88,6 +89,9 @@ PAPER_AUTHOR_DEMOGRAPHIC_AME = j(FIG_DIR, "paper_{authorship}author_demographic_
 
 PAPER_TWEET_DISTRIBUTION = j(FIG_DIR, "paper_tweet_distribution.png")
 PAPER_NEWS_TWEET_PROPORTION = j(FIG_DIR, "paper_news_tweet_proportion.png")
+
+EMBEDDING_COCITE_DENSITY_PLOT = j(FIG_DIR, "embedding_cocite_density_plot.png")
+EMBEDDING_COCITE_DENSITY_PLOT_TESTS_TABLE = j(FIG_DIR, "tables", "embedding_cocite_density_tests_table.txt")
 
 ####################
 # INCLUDES
@@ -177,7 +181,8 @@ rule margins:
 
 rule embedding: 
     input:
-        expand(TITLE_EMBEDDING_SIMILARITIES, venue = VENUES)
+        expand(TITLE_EMBEDDING_SIMILARITIES, venue = VENUES),
+        AGG_TITLE_EMBEDDING_SIMILARITIES
 
 rule tables:
     input:
@@ -209,4 +214,6 @@ rule results:
             authorship = AUTHORSHIP
         ),
         PAPER_TWEET_DISTRIBUTION,
-        PAPER_NEWS_TWEET_PROPORTION
+        PAPER_NEWS_TWEET_PROPORTION,
+        EMBEDDING_COCITE_DENSITY_PLOT,
+        EMBEDDING_COCITE_DENSITY_PLOT_TESTS_TABLE
