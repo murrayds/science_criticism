@@ -18,9 +18,7 @@ letter_ids = pd.read_csv(snakemake.input[0])
 
 client = bigquery.Client()
 
-random_seq = gen_random_sequence()
-SOURCE_DATA_TABLE_REF = f"{temp}.temp_{venue}_ids_{random_seq}"
-
+SOURCE_DATA_TABLE_REF = f"{temp}.temp_{venue}_letter_ids"
 # Upload data from the file at the path given by the variable "letter_ids" to a temporary table on Google Big Query
 job_config = bigquery.LoadJobConfig(
     source_format=bigquery.SourceFormat.CSV,
@@ -47,14 +45,13 @@ print(f"Data uploaded to temporary table: {SOURCE_DATA_TABLE_REF}")
 
 # Now, we will proceed to gather the 
 QUERY = f"""
-WITH id_map AS (
-  SELECT 
-    orig.PaperId AS original_id,
-    lett.PaperId AS letter_id,
-    "letter" AS type
-  FROM {SOURCE_DATA_TABLE_REF} source 
-  LEFT JOIN `{mag}.Papers` lett on lett.Doi = source.letter_doi
-  LEFT JOIN `{mag}.Papers` orig on orig.Doi = source.original_doi
+WITH papers AS (
+    SELECT
+    orig.PaperId as original_id,
+    lett.PaperId as letter_id,
+    FROM `{SOURCE_DATA_TABLE_REF}` s 
+    LEFT JOIN `{mag}.Papers` orig on orig.Doi = s.original_doi
+    LEFT JOIN `{mag}.Papers` lett on lett.Doi = s.letter_doi
 ),
 aps_mag_citations AS (
   -- MAG has poor coverage of APS citations...lets supplement with info from APS
@@ -77,66 +74,24 @@ all_refs AS (
     FROM aps_mag_citations
   )
 ),
-citations AS (
-  SELECT 
-    cited.letter_id AS id,
-    citing.PaperId AS citing_id,
-    "letter" AS type,
-  FROM all_refs citing
-  INNER JOIN id_map cited on cited.letter_id = citing.PaperReferenceId
-  UNION ALL 
-  SELECT 
-    cited.original_id AS id,
-    citing.PaperId as citing_id,
-    "original" as type
-  FROM {mag}.PaperReferences citing 
-  INNER JOIN id_map cited on cited.original_id = citing.PaperReferenceId
-),
-cited_authors AS (
-  SELECT 
-    c.id as cited_id,
-    ARRAY_AGG(paa.AuthorId) as cited_authors
-  FROM {mag}.PaperAuthorAffiliations AS paa
-  INNER JOIN citations AS c ON c.id = paa.PaperId
-  GROUP BY c.id
-),
-citing_authors AS (
-  SELECT 
-    c.citing_id,
-    ARRAY_AGG(paa.AuthorId) as citing_authors
-  FROM {mag}.PaperAuthorAffiliations AS paa
-  INNER JOIN citations AS c ON c.citing_id = paa.PaperId
-  GROUP BY c.citing_id
-),
-self_cites AS (
+cites AS (
   SELECT
-    c.id,
-    c.citing_id,
-    IF(
-      ARRAY_LENGTH(
-        ARRAY(
-          SELECT * FROM a1.cited_authors
-            INTERSECT DISTINCT
-          (SELECT * FROM a2.citing_authors)
-        )
-      ) > 0,
-      TRUE,
-      FALSE
-    ) AS is_self_cite
-  FROM citations c  
-  LEFT JOIN cited_authors a1 ON a1.cited_id = c.id 
-  LEFT JOIN citing_authors a2 ON a2.citing_id = c.citing_id 
+    r.PaperReferenceId as CitedPaperId,
+    r.PaperId as CitingPaperId
+  FROM all_refs r
+  INNER JOIN papers as p1 on p1.original_id = r.PaperReferenceId
+  LEFT JOIN {mag}.Papers as p2 on p2.PaperId = r.PaperId
 )
 
-SELECT
-  c.*,
-  p.Year as citing_year,
-  "{snakemake.wildcards.venue}" as venue,
-  self.is_self_cite
-FROM citations c
-LEFT JOIN {mag}.Papers p on p.PaperId = c.citing_id
-LEFT JOIN self_cites self ON self.id = c.id AND self.citing_id = c.citing_id
-ORDER BY c.id, citing_year
+SELECT DISTINCT
+  c.CitedPaperId,
+  c.CitingPaperId,
+  p1.PaperTitle AS cited_title,
+  p2.PaperTitle AS citing_title
+FROM cites c 
+LEFT JOIN {mag}.Papers p1 on p1.PaperId = c.CitedPaperId
+LEFT JOIN {mag}.Papers p2 on p2.PaperId = c.CitingPaperId
+ORDER BY CitedPaperId, CitingPaperId
 """
 
 # Execute the query

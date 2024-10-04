@@ -53,7 +53,7 @@ venue_colors <- function() {
     "Science" = "firebrick",
     "PNAS" = "goldenrod",
     "PRL" = "steelblue",
-    "Other APS" = "lightblue"
+    "Other APS" = "darkslategrey"
   )
 }
 

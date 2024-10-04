@@ -37,6 +37,17 @@ rule agg_dual_cite_trajectories:
     conda: "../envs/python-minimal.yaml"
     script: "../scripts/processing/gather.py"
 
+rule agg_paper_titles:
+    input:
+        titles = expand(
+            rules.dl_gbq_citing_paper_titles.output,
+            venue = get_venues(config)
+        )
+    output: AGG_PAPER_TITLES
+    conda: "../envs/python-minimal.yaml"
+    script: "../scripts/processing/gather.py"
+
+
 rule calculate_paper_novelty:
     input: 
         zscores = ancient(rules.agg_novelty_zscores.output),
@@ -49,3 +60,9 @@ rule calculate_paper_novelty:
         year_min = config["novelty"]["start_year"],
         year_max = config["novelty"]["end_year"] - 1
     script: "../scripts/processing/calculate_paper_novelty.py"
+
+rule title_embedding_similarities:
+    input: rules.dl_gbq_citing_paper_titles.output
+    output: TITLE_EMBEDDING_SIMILARITIES
+    conda: "../envs/python-minimal.yaml"
+    script: "../scripts/processing/embed_titles_and_calculate_similarity.py"

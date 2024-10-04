@@ -52,8 +52,8 @@ rule plot_paper_metrics_density:
 rule table_counts:
     input:
         rules.agg_letters.output,
-        rules.agg_nonleters.output
-    output: TABLE_COUNTS 
+        rules.agg_nonletters.output
+    output: COUNTS_TABLE 
     conda: "../envs/r-conda.yaml"
     script: "../scripts/tables/table_counts.R"
 
@@ -117,13 +117,14 @@ rule plot_author_comparison:
     conda: "../envs/r-conda.yaml"
     script: "../scripts/plotting/plot_matched_author_comparison.R"
 
-rule plot_cite_ratio:
+rule impact_temporal_comparison:
     input:
         letters = rules.agg_letters.output,
-        traj = rules.agg_dual_cite_trajectories.output 
-    output: CITE_RATIO_PLOT
+        traj = rules.agg_dual_cite_trajectories.output,
+        titles = rules.agg_paper_titles.output
+    output: IMPACT_TEMPORAL_COMPARISON
     conda: "../envs/r-conda.yaml"
-    script: "../scripts/plotting/plot_cite_ratio.R"
+    script: "../scripts/plotting/plot_impact_temporal_comparison.R"
 
 rule paper_author_demographic_ame:
     input: rules.author_marginal_probabilities.output

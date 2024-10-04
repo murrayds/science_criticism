@@ -65,3 +65,11 @@ rule dl_gbq_sciscinet_features:
     threads: workflow.cores * 0.5 if workflow.cores >= 2 else 1
     conda: "../envs/python-gbq.yaml"
     script: "../scripts/download/dl_gbq_sciscinet_features.py"
+
+rule dl_gbq_citing_paper_titles:
+    input: LETTER_IDS
+    output: CITING_PAPER_TITLES
+    threads: workflow.cores * 0.5 if workflow.cores >= 2 else 1
+    conda: "../envs/python-gbq.yaml"
+    script: "../scripts/download/dl_gbq_citing_titles.py"
+

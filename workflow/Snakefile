@@ -27,11 +27,13 @@ PAPER_FIELD_REFS = j(DL_DIR, "paper_field_refs.csv")
 PAPER_FIELD_CITES = j(DL_DIR, "paper_field_cites.csv")
 CAREER_HISTORIES = j(DL_DIR, "career_histories.csv")
 AUTHOR_PROFILES = j(DL_DIR, "author_profiles.csv")
+CITING_PAPER_TITLES = j(DL_DIR, "citing_{venue}_paper_titles.csv")
 
 AGG_LETTERS = j(DERIVED_DIR, "agg", "agg_letters.csv")
 AGG_NONLETTERS = j(DERIVED_DIR, "agg", "agg_nonletters.csv")
 AGG_FIELDS = j(DERIVED_DIR, "agg", "agg_fields.csv")
 AGG_DUAL_CITE_TRAJECTORIES = j(DERIVED_DIR, "agg", "agg_dual_cite_trajectories.csv")
+AGG_PAPER_TITLES = j(DERIVED_DIR, "agg", "agg_paper_titles.csv")
 
 OBSERVED_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "observed", "observed_journal_cooccurence_counts_{year}.pickle")
 NULL_JOURNAL_COOCCURENCE_COUNTS = j(DERIVED_DIR, "novelty", "null", "null_journal_cooccurence_counts_{year}_iter{iter}.pickle")
@@ -42,6 +44,7 @@ NOVELTY_ZSCORES = j(DERIVED_DIR, "novelty", "journal_zscores_{year}.pickle")
 AGG_NOVELTY_ZSCORES = j(DERIVED_DIR, "novelty", "agg_journal_zscores.pickle")
 PAPER_NOVELTY_SCORES = j(DERIVED_DIR, "novelty", "paper_zscores.csv")
 
+TITLE_EMBEDDING_SIMILARITIES = j(DERIVED_DIR, "embedding", "{venue}_title_embedding_similarities.csv")
 
 COUNTS_TABLE = j(FIG_DIR, "tables", "counts_table.txt")
 
@@ -77,7 +80,7 @@ MATCHING_DIAGNOSTIC_IMPACT_PLOT = j(FIG_DIR, "diagnostics", "matching_diagnostic
 PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE = j(FIG_DIR, "tables", "match_papers_{diagnostic}_parameters.txt")
 AUTHOR_MATCH_DIAGNOSTICS_TABLE = j(FIG_DIR, "tables", "match_authors_{diagnostic}_{metric}_parameters.txt")
 
-CITE_RATIO_PLOT = j(FIG_DIR, "ratio_original_letter_citations.png")
+IMPACT_TEMPORAL_COMPARISON = j(FIG_DIR, "impact_temporal_comparison.png")
 
 PAPER_AUTHOR_DEMOGRAPHIC_AME = j(FIG_DIR, "paper_{authorship}author_demographic_ame.png")
 
@@ -177,7 +180,9 @@ rule download:
         AGG_FIELDS,
         AGG_DUAL_CITE_TRAJECTORIES,
         AUTHOR_PROFILES,
-        SCISCINET_FEATURES
+        SCISCINET_FEATURES,
+        expand(CITING_PAPER_TITLES, venue = VENUES),
+        AGG_PAPER_TITLES
 
 rule novelty:
     input:
@@ -214,6 +219,10 @@ rule margins:
     input:
         expand(AUTHOR_MARGINAL_PROBABILITIES, authorship = AUTHORSHIP)
 
+rule embedding: 
+    input:
+        expand(TITLE_EMBEDDING_SIMILARITIES, venue = VENUES)
+
 rule tables:
     input:
         COUNTS_TABLE,
@@ -237,7 +246,7 @@ rule results:
             metric = AUTHOR_METRICS,
             authorship = AUTHORSHIP
         ),
-        CITE_RATIO_PLOT,
+        IMPACT_TEMPORAL_COMPARISON,
         expand(
             PAPER_AUTHOR_DEMOGRAPHIC_AME,
             authorship = AUTHORSHIP
