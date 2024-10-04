@@ -66,21 +66,6 @@ rule table_fit_by_venue:
     conda: "../envs/r-conda.yaml"
     script: "../scripts/tables/table_fit_by_venue.R"
 
-
-rule plot_impact_comparison:
-    input: 
-        expand(
-            rules.match_papers_for_impact_comparison.output,
-            delay = 3,
-            cite_tolerance = 0.10,
-            year_tolerance = 1
-        )
-    output:
-        POOLED_IMPACT_COMPARISON_PLOT,
-        PAIRWISE_IMPACT_COMPARISON_PLOT
-    conda: "../envs/r-conda.yaml"
-    script: "../scripts/plotting/plot_paper_impact_comparison.R"
-
 rule plot_match_diagnostic_impact:
     input:
         expand(
@@ -103,8 +88,20 @@ rule plot_field_representation:
     conda: "../envs/r-conda.yaml"
     script: "../scripts/plotting/plot_field_representation.R"
 
+rule plotdata_paper_comparison:
+    input: 
+        expand(
+            rules.match_papers_for_impact_comparison.output,
+            delay = 3,
+            cite_tolerance = 0.10,
+            year_tolerance = 1
+        )
+    output:
+        PAPER_IMPACT_COMPARISON_PLOTDATA
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/plotting/plotdata_paper_impact_comparison.R"
 
-rule plot_author_comparison:
+rule plotdata_author_comparison:
     input: lambda wc: 
         expand(
             rules.match_authors.output,
@@ -113,9 +110,28 @@ rule plot_author_comparison:
             authorship = wc.authorship,
             metric = wc.metric
         )
-    output: PAIRWISE_AUTHOR_COMPARISON_PLOT
+    output: AUTHOR_COMPARISON_PLOTDATA
     conda: "../envs/r-conda.yaml"
-    script: "../scripts/plotting/plot_matched_author_comparison.R"
+    script: "../scripts/plotting/plotdata_matched_author_comparison.R"
+
+rule plot_matched_comparison:
+    input:
+        rules.plotdata_paper_comparison.output,
+        expand(
+            rules.plotdata_author_comparison.output,
+            authorship = config["matching"]["authorship"],
+            metric = ["citations", "prod"]
+        )
+    output: MATCHED_COMPARISON_PLOT
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/plotting/plot_matched_comparison.R"
+
+rule plot_paper_lagtype_comparison:
+    input:
+        rules.plotdata_paper_comparison.output,
+    output: PAPER_COMPARISON_LAGTYPE_PLOT
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/plotting/plot_paper_comparison_lag.R"
 
 rule impact_temporal_comparison:
     input:

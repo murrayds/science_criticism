@@ -69,10 +69,12 @@ PAPER_METRICS_DENSITY_PLOT_TEST_2SAMPLE_TABLE = j(FIG_DIR, "tables", "paper_metr
 
 FIT_BY_VENUE_TABLE = j(FIG_DIR, "tables", "fit_by_venue.txt")
 
-POOLED_IMPACT_COMPARISON_PLOT = j(FIG_DIR, "pooled_{lag_subset}_impact_comparison_plot.png")
-PAIRWISE_IMPACT_COMPARISON_PLOT = j(FIG_DIR, "pairwise_{lag_subset}_impact_comparison_plot.png")
+PAPER_IMPACT_COMPARISON_PLOTDATA = j(FIG_DIR, "plotdata", "paper_impact_comparison_plotdata.csv")
+AUTHOR_COMPARISON_PLOTDATA = j(FIG_DIR, "plotdata", "{authorship}-author_{metric}_comparison_authors.csv")
+MATCHED_COMPARISON_PLOT = j(FIG_DIR, "matched_comparison_plot.png")
 
-PAIRWISE_AUTHOR_COMPARISON_PLOT = j(FIG_DIR, "pairwise_author_comparison_{metric}_{authorship}-authors.png")
+PAPER_COMPARISON_LAGTYPE_PLOT = j(FIG_DIR, "matched_comparison_lagtype_plot.png")
+
 FIELD_REPRESENTATION_PLOT = j(FIG_DIR, "field_representation_plot.png")
 
 MATCHING_DIAGNOSTIC_IMPACT_PLOT = j(FIG_DIR, "diagnostics", "matching_diagnostic_impact_plot.png")
@@ -107,63 +109,17 @@ CITE_TOLERANCE = config["matching"]["cite_tolerance"]
 YEAR_TOLERANCE = config["matching"]["year_tolerance"]
 PRODUCTIVITY_TOLERANCE = config["matching"]["productivity_tolerance"]
 
-LAG_SUBSET = ["all", "lag0", "lag1plus"]
 DIAGNOSTICS = ["counts", "tstats", "wilcox"]
 
 YEARS_OF_STUDY = get_novelty_years(config)
 NULL_ITERS = get_novelty_null_iters(config)
-
 
 AUTHORSHIP = config["matching"]["authorship"]
 AUTHOR_METRICS = ["prod", "citations"]
 
 rule all:
     input:
-        expand(LETTER_METADATA, venue = VENUES),
-        expand(PAPER_IMPACT, venue = VENUES),
-        expand(PAPER_FIELDS, venue = VENUES),
-        expand(JOURNAL_REFS, year=YEARS_OF_STUDY),
-        TARGET_JOURNAL_REFS,
-        expand(OBSERVED_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY),
-        expand(NULL_JOURNAL_COOCCURENCE_COUNTS, year=YEARS_OF_STUDY, iter=NULL_ITERS),
-        expand(NOVELTY_ZSCORES, year = YEARS_OF_STUDY),
-        AGG_NOVELTY_ZSCORES,
-        PAPER_NOVELTY_SCORES,
-        PAPER_FIELD_REFS,
-        PAPER_FIELD_CITES,
-        CAREER_HISTORIES,
-        IMPACT_RANK_HISTOGRAM,
-        IMPACT_LIKELIHOOD_SCATTER,
-        expand(
-            MATCHED_PAPERS_FOR_IMPACT_COMPARISON,
-            delay = IMPACT_DELAY,
-            cite_tolerance = CITE_TOLERANCE,
-            year_tolerance = YEAR_TOLERANCE
-        ),
-        expand(
-            MATCHED_PAPERS_FOR_METRIC_DENSITY_COMPARISON,
-            cite_tolerance = 0.05,
-            year_tolerance = 3,
-        ),
-        expand(
-            MATCHED_AUTHORS,
-            authorship = AUTHORSHIP,
-            cite_tolerance = 0.15,
-            prod_tolerance = 0.15
-        ),
-        PAPER_METRICS_DENSITY_PLOT,
-        PAPER_METRICS_DENSITY_PLOT_TEST_1SAMPLE_TABLE,
-        PAPER_METRICS_DENSITY_PLOT_TEST_2SAMPLE_TABLE,
-        expand(POOLED_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
-        expand(PAIRWISE_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
-        FIT_BY_VENUE_TABLE,
-        MATCHING_DIAGNOSTIC_IMPACT_PLOT,
-        FIELD_REPRESENTATION_PLOT,
-        expand(
-            PAIRWISE_AUTHOR_COMPARISON_PLOT,
-            metric = AUTHOR_METRICS,
-            authorship = AUTHORSHIP
-        )
+       
 
 rule download:
     input:
@@ -236,16 +192,17 @@ rule results:
         PAPER_METRICS_DENSITY_PLOT,
         PAPER_METRICS_DENSITY_PLOT_TEST_1SAMPLE_TABLE,
         PAPER_METRICS_DENSITY_PLOT_TEST_2SAMPLE_TABLE,
-        expand(POOLED_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
-        expand(PAIRWISE_IMPACT_COMPARISON_PLOT, lag_subset = LAG_SUBSET),
+        PAPER_IMPACT_COMPARISON_PLOTDATA,
         FIT_BY_VENUE_TABLE,
         MATCHING_DIAGNOSTIC_IMPACT_PLOT,
         FIELD_REPRESENTATION_PLOT,
         expand(
-            PAIRWISE_AUTHOR_COMPARISON_PLOT,
+            AUTHOR_COMPARISON_PLOTDATA,
             metric = AUTHOR_METRICS,
             authorship = AUTHORSHIP
         ),
+        MATCHED_COMPARISON_PLOT,
+        PAPER_COMPARISON_LAGTYPE_PLOT,
         IMPACT_TEMPORAL_COMPARISON,
         expand(
             PAPER_AUTHOR_DEMOGRAPHIC_AME,
