@@ -93,6 +93,8 @@ PAPER_NEWS_TWEET_PROPORTION = j(FIG_DIR, "paper_news_tweet_proportion.png")
 EMBEDDING_COCITE_DENSITY_PLOT = j(FIG_DIR, "embedding_cocite_density_plot.png")
 EMBEDDING_COCITE_DENSITY_PLOT_TESTS_TABLE = j(FIG_DIR, "tables", "embedding_cocite_density_tests_table.txt")
 
+LETTER_ALTMETRIC_COMPARISON_PLOT = j(FIG_DIR, "letter_altmetric_comparison.png")
+
 ####################
 # INCLUDES
 ####################
@@ -216,4 +218,5 @@ rule results:
         PAPER_TWEET_DISTRIBUTION,
         PAPER_NEWS_TWEET_PROPORTION,
         EMBEDDING_COCITE_DENSITY_PLOT,
-        EMBEDDING_COCITE_DENSITY_PLOT_TESTS_TABLE
+        EMBEDDING_COCITE_DENSITY_PLOT_TESTS_TABLE,
+        LETTER_ALTMETRIC_COMPARISON_PLOT

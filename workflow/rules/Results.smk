@@ -93,8 +93,8 @@ rule plotdata_paper_comparison:
         expand(
             rules.match_papers_for_impact_comparison.output,
             delay = 3,
-            cite_tolerance = 0.10,
-            year_tolerance = 1
+            cite_tolerance = 0.05,
+            year_tolerance = 2
         )
     output:
         PAPER_IMPACT_COMPARISON_PLOTDATA
@@ -180,3 +180,11 @@ rule embedding_cocite_density_plot:
         table = EMBEDDING_COCITE_DENSITY_PLOT_TESTS_TABLE
     conda: "../envs/r-conda.yaml"
     script: "../scripts/plotting/plot_embedding_cocite_density.R"
+
+rule plot_letter_altmetric_comparison:
+    input:
+        rules.agg_letters.output,
+        rules.dl_gbq_sciscinet_features.output
+    output: LETTER_ALTMETRIC_COMPARISON_PLOT
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/plotting/plot_letter_altmetric_comparison.R"
