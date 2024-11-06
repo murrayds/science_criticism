@@ -35,6 +35,7 @@ tests <- df_matched %>%
   ) %>%
   summarize(
     venue = venue,
+    lagtype = lagtype,
     t.p.value = round(t$p.value, 4),
   )
 
@@ -69,6 +70,6 @@ plotdata <- df_matched %>%
   mutate(
     venue = factor(venue, levels = rev(venue_levels())),
   ) %>%
-  left_join(tests, by = c("venue"))
+  left_join(tests, by = c("venue", "lagtype"))
 
 write_csv(plotdata, snakemake@output[[1]])

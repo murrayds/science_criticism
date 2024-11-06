@@ -141,7 +141,6 @@ plotdata_impact <- df_byfield %>%
   ) %>%
   mutate(metric = "Impact")
 
-plotdata_ref_diversity %>% filter(venue == "PR-A")
 # Aggregate all individual plotdata_* objects into a single dataframe
 df_all <- data.table::rbindlist(
   list(

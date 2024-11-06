@@ -54,13 +54,13 @@ plotdata <- rbind(authors, papers) %>%
 
 p <- plotdata %>%
   ggplot(aes(x = mean_diff, y = venue, color = venue)) +
-  geom_point(size = 4) +
+  geom_point(size = 3) +
   geom_errorbar(aes(xmin = lower, xmax = upper), width = 0) +
   geom_vline(xintercept = 0, linetype = "dashed") +
   geom_text(
     aes(label = signif, x = upper),
     nudge_x = 0.075,
-    nudge_y = -0.06,
+    nudge_y = -0.1,
     size = 6,
   ) +
   facet_wrap(~panel, scale = "free_x", nrow = 1) +
