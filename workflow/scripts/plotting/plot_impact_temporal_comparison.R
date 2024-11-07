@@ -30,7 +30,7 @@ source("scripts/common.R")
 letters <- read_csv(snakemake@input[[1]], col_types = cols())
 
 # Get the titles data so we can identify those that mentiona reply
-replies <- read_csv(snakemake@input[[3]]) %>%
+replies <- read_csv(snakemake@input[[3]], col_types = cols()) %>%
   filter(grepl("reply", citing_title, fixed = TRUE)) %>%
   select(CitingPaperId)
 
@@ -151,7 +151,6 @@ plotdata_rawcite <- dual %>%
 # Combine all the plots together
 plotdata <- data.table::rbindlist(
   list(
-    plotdata_ratio,
     plotdata_rawcite,
     plotdata_cocite
   ),
@@ -163,11 +162,10 @@ plotdata_final <- plotdata %>%
   mutate(
     metric = factor(
       metric,
-      levels = c("raw", "ratio", "cocite"),
+      levels = c("raw", "cocite"),
       labels = c(
-        "Annual citations\nto targeted papers",
-        "% of letter impact\nvs targeted impact",
-        "% Target citations\nthat also cite letter"
+        "Annual citations\nto target",
+        "% that cite\nthe letter"
       )
     )
   ) %>%
@@ -204,6 +202,6 @@ ggsave(
   p,
   filename = snakemake@output[[1]],
   width = 7.5,
-  height = 3.5,
+  height = 3.0,
   bg = "white"
 )
