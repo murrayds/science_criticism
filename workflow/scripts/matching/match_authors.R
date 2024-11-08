@@ -118,7 +118,7 @@ df_matched_part <- lapply(c(kStartYear:kEndYear), function(event_year) {
       frac_prod = sum(1 / num_authors),
       impact = mean(impact_3year_norm, na.rm = TRUE),
       impact_raw = mean(impact_3year_norm, na.rm = TRUE),
-      field = first(DescTools::Mode(field, na.rm = TRUE)),
+      field = field[which.max(tabulate(match(field, unique(field))))],
       .groups = "drop"
     ) %>%
     filter(total_prod > kMinProductivity) %>%
