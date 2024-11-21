@@ -76,3 +76,13 @@ rule agg_paper_title_similarities:
     output: AGG_TITLE_EMBEDDING_SIMILARITIES
     conda: "../envs/python-minimal.yaml"
     script: "../scripts/processing/gather.py"
+
+rule agg_scite_metrics:
+    input: 
+        metrics = expand(
+            rules.dl_gbq_scite_metrics.output,
+            venue = get_venues(config)
+        )
+    output: AGG_SCITE_METRICS
+    conda: "../envs/python-minimal.yaml"
+    script: "../scripts/processing/gather.py"

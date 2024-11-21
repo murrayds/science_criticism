@@ -84,15 +84,3 @@ rule agg_matched_author_diagnostics:
     output: AGG_AUTHOR_MATCHED_DIAGNOSTICS
     conda: "../envs/r-conda.yaml"
     script: "../scripts/matching/agg_author_match_diagnostics.R"
-
-rule table_paper_impact_match_diagnostics:
-    input: rules.agg_matched_paper_impact_diagnostics.output
-    output: PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE
-    conda: "../envs/r-conda.yaml"
-    script: "../scripts/tables/table_paper_match_diagnostics.R"
-
-rule table_author_match_diagonstics:
-    input: rules.agg_matched_author_diagnostics.output 
-    output: AUTHOR_MATCH_DIAGNOSTICS_TABLE
-    conda: "../envs/r-conda.yaml"
-    script: "../scripts/tables/table_author_match_diagnostics.R"

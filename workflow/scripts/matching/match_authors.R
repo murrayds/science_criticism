@@ -154,7 +154,7 @@ df_matched_part <- lapply(c(kStartYear:kEndYear), function(event_year) {
       method = "nearest",
       caliper = c(
         impact_norm = cite_tolerance,
-        frac_prod = prod_tolerance,
+        prod_norm = prod_tolerance,
         lead_prod_norm = 0.2
       ),
       ratio = 1, # 1 nearest match for each record

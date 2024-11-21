@@ -11,7 +11,7 @@ novelty-hpc:
 	snakemake -j 20 novelty --force
 
 match:
-	snakemake -j 4 match --rerun-triggers mtime
+	snakemake -j 2 match --rerun-triggers mtime
 
 results:
 	snakemake -j 4 results --rerun-triggers mtime

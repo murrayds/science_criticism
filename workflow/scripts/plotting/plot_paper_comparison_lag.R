@@ -21,9 +21,9 @@ plotdata <- papers %>%
       lagtype,
       levels = c("lagall", "lag0", "lag1plus"),
       labels = c(
-        "All",
-        "Lag = 0",
-        "Lag > 0"
+        "(A) All",
+        "(B) Lag = 0",
+        "(C) Lag > 0"
       )
     )
   )

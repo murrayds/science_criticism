@@ -8,6 +8,7 @@ source("scripts/plotting/theme.R")
 
 agg <- read_csv(snakemake@input[[1]], col_types = cols())
 
+print(agg)
 mutate_counts_table <- function(df) {
   df %>%
     select(
@@ -16,7 +17,7 @@ mutate_counts_table <- function(df) {
     rowwise() %>%
     mutate(
       value = paste0(
-        count_candidates,
+        num_matched,
         " (",
         round(num_matched / count_candidates * 100, 1),
         "%)"
@@ -33,7 +34,7 @@ mutate_tstats_table <- function(df) {
     mutate(
       value = paste0(
         round(t.estimate, 2),
-        " (p = ",
+        " (p=",
         formatC(round(t.p.value, 3), format = "f", digits = 3),
         ")"
       )
@@ -47,7 +48,7 @@ mutate_wilcox_table <- function(df) {
     rowwise() %>%
     mutate(
       value = paste0(
-        "p = ",
+        "p=",
         formatC(round(wilcox.p.value, 3), format = "f", digits = 3)
       )
     ) %>%
@@ -57,7 +58,7 @@ mutate_wilcox_table <- function(df) {
 # First, lets perform some formatting on the table
 agg_formatted <- agg %>%
   mutate(
-    venue = factor(venue, levels = venue_levels_all())
+    venue = factor(venue, levels = venue_levels())
   ) %>%
   filter(!is.na(venue))
 
@@ -70,39 +71,40 @@ if (param == "counts") {
   agg_formatted <- agg_formatted %>% mutate_wilcox_table()
 }
 
-print(agg_formatted)
 agg_formatted <- agg_formatted %>%
   pivot_wider(names_from = venue, values_from = value) %>%
-  select(authorship, impact, productivity, venue_levels_all())
+  select(authorship, impact, productivity, venue_levels())
 
 # We will narrow the table into three separate pieces, and
 # for each we will vary only a single parameter.
 cite_tolerance_table <- agg_formatted %>%
-  filter(productivity == 0.1)
+  filter(productivity == 0.05)
 cite_tolerance_table[nrow(cite_tolerance_table) + 1, ] <- NA
 
 productivity_tolerance_table <- agg_formatted %>%
-  filter(impact == 0.1)
+  filter(impact == 0.05)
 productivity_tolerance_table[nrow(productivity_tolerance_table) + 1, ] <- NA
 
 # Aggregate mini tables, perform final polish
 tab <- data.table::rbindlist(
   list(cite_tolerance_table, productivity_tolerance_table)
 ) %>%
-  mutate(impact = ifelse(is.na(impact), NA, paste0(impact * 100, "%"))) %>%
+  mutate(
+    impact = ifelse(is.na(impact), NA, paste0(impact * 100, "%")),
+    productivity = ifelse(is.na(productivity), NA, paste0(productivity * 100, "%"))
+  ) %>%
   rename(
     `Author position` = `authorship`,
-    `Impact tolerance` = impact,
-    `Productivity tolerance` = productivity
+    `Impact $\\pm$ $\\epsilon$` = impact,
+    `Productivity $\\pm$ $\\epsilon$` = productivity
   )
-
 
 align_str <- paste0(
   "clll",
   paste0(
     rep(
       "l",
-      length(venue_levels_all())
+      length(venue_levels())
     ),
     collapse = ""
   ),

@@ -2,8 +2,11 @@ library(readr)
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tidyr))
 
+source("scripts/common.R")
 
-letters <- read_csv(snakemake@input[[1]], col_types = cols())
+letters <- read_csv(snakemake@input[[1]], col_types = cols()) %>%
+  collapse_aps()
+
 match_files <- snakemake@input[c(2:length(snakemake@input))]
 
 # First, build a dataframe calculating the "impact before" 
@@ -20,7 +23,8 @@ letters <- data.table::rbindlist(lapply(c(0:12), function(x) {
 # Now, we iterate through each file, calculating information about
 # the parameters, matches made, and effects observed
 matched <- data.table::rbindlist(lapply(match_files, function(f) {
-  df <- read_csv(f, col_types = cols())
+  df <- read_csv(f, col_types = cols()) %>%
+    collapse_aps()
 
   delay <- as.numeric(sub(".*_(\\d+)delay_.*", "\\1", f))
   impact <- as.numeric(sub(".*_(\\d+\\.\\d+)impact_.*", "\\1", f))

@@ -101,13 +101,13 @@ p <- plotdata %>%
   geom_text(
     data = plottests,
     aes(label = label_mean),
-    x = 0.6, y = 0.25, hjust = 0,
+    x = 0.5, y = 0.25, hjust = 0,
     size = 3.5
   ) +
   geom_text(
     data = plottests,
     aes(label = label_tests),
-    x = 0.04, y = 1.3, hjust = 0,
+    x = 0.04, y = 1.6, hjust = 0,
     size = 3.5
   ) +
   scale_x_continuous(
@@ -124,7 +124,7 @@ p <- plotdata %>%
   theme_criticism() +
   theme(
     panel.grid = element_blank(),
-    strip.text = element_text(hjust = 0),
+    strip.text = element_text(hjust = 0, size = 11),
     axis.title.y = element_blank(),
     panel.spacing.x = unit(0.30, "cm", data = NULL),
     legend.position = "none"
@@ -134,7 +134,7 @@ p <- plotdata %>%
 ggsave(
   p,
   filename = snakemake@output[[1]],
-  width = 10, height = 2.5,
+  width = 7.5, height = 2.0,
   bg = "white"
 )
 

@@ -71,8 +71,8 @@ rule plot_match_diagnostic_impact:
         expand(
             rules.match_papers_for_impact_comparison.output,
             delay = 3,
-            cite_tolerance = 0.10,
-            year_tolerance = 1
+            cite_tolerance = 0.05,
+            year_tolerance = 2
         )
     output:
         MATCHING_DIAGNOSTIC_IMPACT_PLOT
@@ -94,7 +94,7 @@ rule plotdata_paper_comparison:
             rules.match_papers_for_impact_comparison.output,
             delay = 3,
             cite_tolerance = 0.05,
-            year_tolerance = 2
+            year_tolerance = 1
         )
     output:
         PAPER_IMPACT_COMPARISON_PLOTDATA
@@ -105,8 +105,8 @@ rule plotdata_author_comparison:
     input: lambda wc: 
         expand(
             rules.match_authors.output,
-            cite_tolerance = 0.15,
-            prod_tolerance = 1.0,
+            cite_tolerance = 0.05,
+            prod_tolerance = 0.05,
             authorship = wc.authorship,
             metric = wc.metric
         )
@@ -188,3 +188,15 @@ rule plot_letter_altmetric_comparison:
     output: LETTER_ALTMETRIC_COMPARISON_PLOT
     conda: "../envs/r-conda.yaml"
     script: "../scripts/plotting/plot_letter_altmetric_comparison.R"
+
+rule table_paper_impact_match_diagnostics:
+    input: rules.agg_matched_paper_impact_diagnostics.output
+    output: PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/tables/table_paper_match_diagnostics.R"
+
+rule table_author_match_diagonstics:
+    input: rules.agg_matched_author_diagnostics.output 
+    output: AUTHOR_MATCH_DIAGNOSTICS_TABLE
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/tables/table_author_match_diagnostics.R"

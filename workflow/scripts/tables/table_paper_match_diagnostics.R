@@ -15,7 +15,7 @@ mutate_counts_table <- function(df) {
     rowwise() %>%
     mutate(
       value = paste0(
-        count_candidates,
+        num_matched,
         " (",
         round(num_matched / count_candidates * 100, 1),
         "%)"
@@ -32,7 +32,7 @@ mutate_tstats_table <- function(df) {
     mutate(
       value = paste0(
         round(t.estimate, 2),
-        " (p = ",
+        " (p=",
         formatC(round(t.p.value, 3), format = "f", digits = 3),
         ")"
       )
@@ -47,7 +47,7 @@ mutate_wilcox_table <- function(df) {
     rowwise() %>%
     mutate(
       value = paste0(
-        "p = ",
+        "p=",
         formatC(round(wilcox.p.value, 3), format = "f", digits = 3)
       )
     ) %>%
@@ -57,7 +57,7 @@ mutate_wilcox_table <- function(df) {
 # First, lets perform some formatting on the table
 agg_formatted <- agg %>%
   mutate(
-    venue = factor(venue, levels = venue_levels_all())
+    venue = factor(venue, levels = venue_levels())
   ) %>%
   filter(!is.na(venue))
 
@@ -74,21 +74,21 @@ print(agg_formatted)
 
 agg_formatted <- agg_formatted %>%
   pivot_wider(names_from = venue, values_from = value) %>%
-  select(delay, impact, year, venue_levels_all())
+  select(delay, impact, year, venue_levels())
 
 
 # We will narrow the table into three separate pieces, and
 # for each we will vary only a single parameter.
 delay_table <- agg_formatted %>%
-  filter(impact == 0.1, year == 1)
+  filter(impact == 0.05, year == 2)
 delay_table[nrow(delay_table) + 1, ] <- NA
 
 cite_tolerance_table <- agg_formatted %>%
-  filter(delay == 3, year == 1)
+  filter(delay == 3, year == 2)
 cite_tolerance_table[nrow(cite_tolerance_table) + 1, ] <- NA
 
 year_tolerance_table <- agg_formatted %>%
-  filter(delay == 3, impact == 0.1)
+  filter(delay == 3, impact == 0.05)
 
 # Aggregate mini tables, perform final polish
 tab <- data.table::rbindlist(
@@ -107,14 +107,13 @@ align_str <- paste0(
   paste0(
     rep(
       "l",
-      length(venue_levels_all())
+      length(venue_levels())
     ),
     collapse = ""
   ),
   collapse = ""
 )
 
-print(align_str)
 # Construct the table
 latex_table <- xtable(
   tab,

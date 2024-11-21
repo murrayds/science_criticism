@@ -49,10 +49,12 @@ p1 <- orig1 %>%
   theme_minimal() +
   theme(
     panel.grid = element_blank(),
-    legend.position = "none"
+    legend.position = "none",
+    plot.title = element_text(size = 14, face = "bold")
   ) +
   xlab("Tweets accumulated by critical letter") +
-  ylab("Tweets accumulated by original paper")
+  ylab("Tweets accumulated by original paper") +
+  ggtitle("(A)")
 
 
 orig2 <- letters %>%
@@ -94,10 +96,12 @@ p2 <- orig2 %>%
   theme_minimal() +
   theme(
     panel.grid = element_blank(),
-    legend.position = "none"
+    legend.position = "none",
+    plot.title = element_text(size = 14, face = "bold")
   ) +
   xlab("News mentions accumulated by critical letter") +
-  ylab("News mentions accumulated by original paper")
+  ylab("News mentions accumulated by original paper") +
+  ggtitle("(B)")
 
 g <- grid.arrange(p1, p2, nrow = 1, widths = c(0.6, 0.4))
 

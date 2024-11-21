@@ -43,15 +43,16 @@ plotdata <- rbind(authors, papers) %>%
         "last-impact_raw"
       ),
       labels = c(
-        "Paper impact",
-        "First author productivity",
-        "Last author productivity",
-        "First author impact",
-        "Last author impact"
+        "(A) Paper impact",
+        "(B) First author productivity",
+        "(C) Last author productivity",
+        "(D) First author impact",
+        "(E) Last author impact"
       )
     )
   )
 
+print(plotdata)
 p <- plotdata %>%
   ggplot(aes(x = mean_diff, y = venue, color = venue)) +
   geom_point(size = 3) +
@@ -70,6 +71,7 @@ p <- plotdata %>%
     legend.position = c(0.25, 0.75),
     panel.spacing.x = unit(0.30, "cm", data = NULL),
     strip.text = element_text(angle = 0, hjust = 0),
+    strip.text.y = element_text(size = 13),
     axis.title.y = element_blank(),
     axis.text.y = element_text(face = "bold")
   ) +
@@ -79,7 +81,7 @@ p <- plotdata %>%
 ggsave(
   p,
   filename = snakemake@output[[1]],
-  width = 10,
-  height = 3.5,
+  width = 10.5,
+  height = 3.25,
   bg = "white"
 )

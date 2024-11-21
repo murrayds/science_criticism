@@ -164,8 +164,8 @@ plotdata_final <- plotdata %>%
       metric,
       levels = c("raw", "cocite"),
       labels = c(
-        "Annual citations\nto target",
-        "% that cite\nthe letter"
+        "(A)",
+        "(B)"
       )
     )
   ) %>%
@@ -174,11 +174,36 @@ plotdata_final <- plotdata %>%
     delta_year <= 8
   )
 
+
+plotdata_slopes <- plotdata_final %>%
+  group_by(venue, metric) %>%
+  arrange(delta_year) %>%
+  mutate(slope = (mu - lag(mu)) / (delta_year - lag(delta_year))) %>%
+  summarize(
+    avg_slope = round(mean(slope, na.rm = TRUE), 3),
+    slope_lab = ifelse(
+      avg_slope < 0,
+      paste0("m = ", avg_slope),
+      paste0("m = +", avg_slope)
+    ),
+    last_val = last(mu),
+  )
+
 # Build the plot
 p <- plotdata_final %>%
   ggplot(aes(x = delta_year, y = mu, color = venue)) +
   geom_point() +
   geom_line() +
+  # geom_text(
+  #   data = plotdata_slopes,
+  #   aes(
+  #     x = 0, y = last_val,
+  #     label = slope_lab
+  #   ),
+  #   hjust = 1,
+  #   vjust = 1,
+  #   size = 3
+  # ) +
   facet_grid(metric ~ venue, scale = "free_y", switch = "y") +
   scale_color_manual(values = venue_colors()) +
   scale_y_continuous(
@@ -190,8 +215,13 @@ p <- plotdata_final %>%
   theme_criticism() +
   theme(
     legend.position = "none",
-    strip.text.y.left = element_text(angle = 0, hjust = 0),
-    strip.text.x = element_text(hjust = 0),
+    strip.text.y.left = element_text(
+      angle = 0,
+      hjust = 0, vjust = 1,
+      size = 12,
+      face = "bold"
+    ),
+    strip.text.x = element_text(hjust = 0, size = 12),
     axis.title.y = element_blank(),
     panel.spacing.x = unit(0.30, "cm", data = NULL)
   ) +

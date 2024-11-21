@@ -35,9 +35,9 @@ plotdata <- features %>%
       metric,
       levels = c("top_10pct", "top_05pct", "top_01pct"),
       labels = c(
-        "Among top 10%",
-        "Among top 5%",
-        "Among top 1%"
+        "(A) Among top 10%",
+        "(B) Among top 5%",
+        "(C) Among top 1%"
       )
     ),
     venue = factor(venue, levels = rev(venue_levels()))

@@ -31,7 +31,7 @@ plotdata <- matched %>%
     metric = factor(
       metric,
       levels = c("has_tweet", "has_news"),
-      labels = c("At least one tweet", "At least one news coverage")
+      labels = c("(A) At least one tweet", "(B) At least one news mention")
     )
   )
 

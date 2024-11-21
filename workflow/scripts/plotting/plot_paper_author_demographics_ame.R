@@ -15,9 +15,9 @@ plotdata <- df %>%
       factor,
       levels = c("genderFemale", "senioritySenior", "eliteElite"),
       labels = c(
-        "Inferred gender is woman",
-        "Is a senior researcher",
-        "Affiliated with top university"
+        "(A) Inferred gender is woman",
+        "(B) Is a senior researcher",
+        "(C) Elite affiliation"
       )
     )
   )

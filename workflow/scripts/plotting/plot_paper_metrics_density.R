@@ -162,10 +162,10 @@ df_all <- data.table::rbindlist(
         "Novelty"
       ),
       labels = c(
-        "Impact",
-        "Reference\nDiversity",
-        "Citation\nDiversity",
-        "Novelty"
+        "(A) Impact",
+        "(B) Ref. Diversity",
+        "(C) Cite. Diversity",
+        "(D) Novelty"
       ),
     )
   ) %>%
@@ -180,7 +180,7 @@ df_all <- data.table::rbindlist(
 plotdata_matched <- df_all %>%
   filter(type == "article") %>%
   inner_join(matched %>% select(id), by = "id") %>%
-  filter(metric != "Impact")
+  filter(metric != "A. Impact")
 
 # Now begin building a table holding the results of one-sample KS tests
 # comparing the distribution of observed ranks of criticism-targeted papers
@@ -319,7 +319,8 @@ p <- df_all %>%
   theme_criticism() +
   theme(
     panel.grid = element_blank(),
-    strip.text.y.left = element_text(angle = 0, hjust = 0),
+    strip.text.y.left = element_text(angle = 0, hjust = 0, size = 14),
+    strip.text.x = element_text(hjust = 0, size = 14),
     axis.title.y = element_blank(),
     panel.spacing.x = unit(0.30, "cm", data = NULL)
   ) +

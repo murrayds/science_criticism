@@ -2,8 +2,11 @@ library(readr)
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tidyr))
 
+source("scripts/common.R")
+
 # Load the datasets and filter to the relevant venue
-letters <- read_csv(snakemake@input[[1]], col_types = cols())
+letters <- read_csv(snakemake@input[[1]], col_types = cols()) %>%
+  collapse_aps()
 
 match_files <- snakemake@input[c(2:length(snakemake@input))]
 
@@ -28,7 +31,8 @@ letter_counts <- letters %>%
 # Now, we iterate through each file, calculating information about
 # the parameters, matches made, and effects observed
 matched <- data.table::rbindlist(lapply(match_files, function(f) {
-  df <- read_csv(f, col_types = cols())
+  df <- read_csv(f, col_types = cols()) %>%
+    collapse_aps()
 
   authorship <- sub(".*_(first|last)_authors.*", "\\1", f)
   impact <- as.numeric(sub(".*_(\\d+\\.\\d+)impact_.*", "\\1", f))
@@ -54,6 +58,7 @@ matched <- data.table::rbindlist(lapply(match_files, function(f) {
       treat = factor(treat)
     ) %>%
     group_by(venue) %>%
+    filter(n() > 4) %>%
     arrange(match.group, treat) %>%
     do(
       w = wilcox.test(
