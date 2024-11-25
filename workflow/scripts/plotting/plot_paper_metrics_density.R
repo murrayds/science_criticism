@@ -141,6 +141,14 @@ plotdata_impact <- df_byfield %>%
   ) %>%
   mutate(metric = "Impact")
 
+
+metric_names <- c(
+  "Impact",
+  "Ref. Diversity",
+  "Cite. Diversity",
+  "Novelty"
+)
+
 # Aggregate all individual plotdata_* objects into a single dataframe
 df_all <- data.table::rbindlist(
   list(
@@ -161,15 +169,22 @@ df_all <- data.table::rbindlist(
         "Citation Diversity",
         "Novelty"
       ),
-      labels = c(
-        "(A) Impact",
-        "(B) Ref. Diversity",
-        "(C) Cite. Diversity",
-        "(D) Novelty"
-      ),
+      labels = metric_names
     )
   ) %>%
   collapse_aps()
+
+panel_labels <- expand.grid(venue = venue_levels(), metric = metric_names) %>%
+  group_by(metric) %>%
+  mutate(
+    column = case_when(
+      metric == "Impact" ~ "A",
+      metric == "Ref. Diversity" ~ "B",
+      metric == "Cite. Diversity" ~ "C",
+      metric == "Novelty" ~ "D"
+    ),
+    label = paste0(column, row_number())
+  )
 
 #
 # MATCHING DATA
@@ -180,7 +195,7 @@ df_all <- data.table::rbindlist(
 plotdata_matched <- df_all %>%
   filter(type == "article") %>%
   inner_join(matched %>% select(id), by = "id") %>%
-  filter(metric != "A. Impact")
+  filter(metric != "Impact")
 
 # Now begin building a table holding the results of one-sample KS tests
 # comparing the distribution of observed ranks of criticism-targeted papers
@@ -302,7 +317,15 @@ p <- df_all %>%
     data = plotlabs,
     aes(label = label_tests),
     x = 0.04, y = 1.95, hjust = 0,
+    face = "bold",
     size = 3.5
+  ) +
+  geom_label(
+    data = panel_labels,
+    aes(label = label),
+    x = 0.7, y = 1.90, hjust = 0,
+    size = 6.0,
+    fill = "white", alpha = 0.8
   ) +
   facet_grid(venue ~ metric, switch = "y") +
   scale_fill_manual(values = venue_colors(), guide = "none") +

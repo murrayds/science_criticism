@@ -8,7 +8,6 @@ source("scripts/plotting/theme.R")
 
 agg <- read_csv(snakemake@input[[1]], col_types = cols())
 
-print(agg)
 mutate_counts_table <- function(df) {
   df %>%
     select(
@@ -78,11 +77,11 @@ agg_formatted <- agg_formatted %>%
 # We will narrow the table into three separate pieces, and
 # for each we will vary only a single parameter.
 cite_tolerance_table <- agg_formatted %>%
-  filter(productivity == 0.05)
+  filter(productivity == 0.10)
 cite_tolerance_table[nrow(cite_tolerance_table) + 1, ] <- NA
 
 productivity_tolerance_table <- agg_formatted %>%
-  filter(impact == 0.05)
+  filter(impact == 0.10)
 productivity_tolerance_table[nrow(productivity_tolerance_table) + 1, ] <- NA
 
 # Aggregate mini tables, perform final polish
@@ -91,10 +90,14 @@ tab <- data.table::rbindlist(
 ) %>%
   mutate(
     impact = ifelse(is.na(impact), NA, paste0(impact * 100, "%")),
-    productivity = ifelse(is.na(productivity), NA, paste0(productivity * 100, "%"))
+    productivity = ifelse(
+      is.na(productivity),
+      NA,
+      paste0(productivity * 100, "%")
+    )
   ) %>%
   rename(
-    `Author position` = `authorship`,
+    `Authorship` = `authorship`,
     `Impact $\\pm$ $\\epsilon$` = impact,
     `Productivity $\\pm$ $\\epsilon$` = productivity
   )

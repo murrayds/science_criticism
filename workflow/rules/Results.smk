@@ -105,8 +105,8 @@ rule plotdata_author_comparison:
     input: lambda wc: 
         expand(
             rules.match_authors.output,
-            cite_tolerance = 0.05,
-            prod_tolerance = 0.05,
+            cite_tolerance = 0.10,
+            prod_tolerance = 0.10,
             authorship = wc.authorship,
             metric = wc.metric
         )
@@ -200,3 +200,15 @@ rule table_author_match_diagonstics:
     output: AUTHOR_MATCH_DIAGNOSTICS_TABLE
     conda: "../envs/r-conda.yaml"
     script: "../scripts/tables/table_author_match_diagnostics.R"
+
+rule table_author_match_quality:
+    input: lambda wc: 
+        expand(
+            rules.match_authors.output,
+            cite_tolerance = 0.10,
+            prod_tolerance = 0.10,
+            authorship = wc.authorship,
+        )
+    output: AUTHOR_MATCH_QUALITY_TABLE
+    conda: "../envs/r-conda.yaml"
+    script: "../scripts/tables/table_author_match_quality.R"

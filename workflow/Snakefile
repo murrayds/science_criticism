@@ -97,6 +97,8 @@ EMBEDDING_COCITE_DENSITY_PLOT_TESTS_TABLE = j(FIG_DIR, "tables", "embedding_coci
 
 LETTER_ALTMETRIC_COMPARISON_PLOT = j(FIG_DIR, "letter_altmetric_comparison.png")
 
+AUTHOR_MATCH_QUALITY_TABLE = j(FIG_DIR, "diagnostics", "{authorship}-author_matching_quality_table.txt")
+
 ####################
 # INCLUDES
 ####################
@@ -221,4 +223,5 @@ rule results:
         LETTER_ALTMETRIC_COMPARISON_PLOT,
         COUNTS_TABLE,
         expand(PAPER_IMPACT_MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS),
-        expand(AUTHOR_MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS, metric=AUTHOR_METRICS)
+        expand(AUTHOR_MATCH_DIAGNOSTICS_TABLE, diagnostic=DIAGNOSTICS, metric=AUTHOR_METRICS),
+        expand(AUTHOR_MATCH_QUALITY_TABLE, authorship=AUTHORSHIP)

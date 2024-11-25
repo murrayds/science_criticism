@@ -82,6 +82,6 @@ ggsave(
   p,
   filename = snakemake@output[[1]],
   width = 10.5,
-  height = 3.25,
+  height = 3,
   bg = "white"
 )

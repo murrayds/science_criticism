@@ -6,6 +6,7 @@ source("scripts/plotting/theme.R")
 source("scripts/common.R")
 
 df_matched <- read_csv(snakemake@input[[1]], col_types = cols()) %>%
+  collapse_aps() %>%
   mutate(
     treat = factor(type, levels = c("Treatment", "Control")),
     venue = factor(venue, levels = venue_levels())
@@ -38,7 +39,7 @@ p <- df_matched %>%
 ggsave(
   p,
   filename = snakemake@output[[1]],
-  width = 7,
-  height = 5,
+  width = 8,
+  height = 4,
   bg = "white"
 )
