@@ -1,22 +1,9 @@
 PROJ_NAME=criticism
 
-.PHONY: all dryrun test create_conda_env build_conda_env report create_env create_ipykernel
-
-
-all:
-	snakemake --cores all -r -p 
-
-dryrun:
-	snakemake -n -r -p
-
-dag.svg: workflow/Snakefile
-	snakemake --dag | dot -Tsvg > dag.svg
-
-test:
-	pytest
+.PHONY: reate_conda_env build_conda_env report create_env create_ipykernel
 
 create_conda_env:
-	conda create -n $(PROJ_NAME) -c bioconda -c conda-forge python=3.11 snakemake jupyterlab pandas nb_conda black isort flake8 pytest neovim snakefmt
+	conda create -n $(PROJ_NAME) -c bioconda -c conda-forge python=3.11 snakemake=8.16.0
 
 export_conda_env:
 	conda env export > environment.yml

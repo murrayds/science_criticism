@@ -70,8 +70,6 @@ if (param == "counts") {
   agg_formatted <- agg_formatted %>% mutate_wilcox_table()
 }
 
-print(agg_formatted)
-
 agg_formatted <- agg_formatted %>%
   pivot_wider(names_from = venue, values_from = value) %>%
   select(delay, impact, year, venue_levels())
