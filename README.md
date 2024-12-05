@@ -1,97 +1,26 @@
-# Project template
+# Code for the paper ``The origin, consequence, and visibility of criticism in science''
 
-A simple template for research project repos. You can also use [data science and reproducible science cookie cutters](https://github.com/audreyr/cookiecutter#data-science).
+This repository contains code to reproduce all figures and tables used for the paper titled [``The origin, consequence, and visibility of criticism in science''](https://arxiv.org/abs/2412.02809).
 
-## Installation
+To run the code, you will need to complete the following steps:
 
-Run the following
+1. Copy the file `workflow/config.template.yaml` to a new file named `config.yaml`. In the new file, fill in the missing parameters, particularly `data_dir` (where to find and save data) and `fig_dir` (where to save figures). These should be paths on your local system.
+    * Note that `data_dir` should already contain the folders `raw` and `downloaded` which will be accessed by the workflow. If `downloaded` does not exist, the workflow will attempt to query BigQuery for the data.
+    * If you are are running this repository with access to CCNR-Success BigQuery data, then you will need to fill in the appropriate paths to the relevant data tables in `config.yaml`. Otherwise leave these blank.
+    * Additionally, if you have access to CCNR-Success BigQuery, then you will need to ensure that the Google Cloud CLI has been installed and initialized on your local system (see [this link](https://cloud.google.com/sdk/docs/install) for instructions).
+3. If you do not already have snakemake (>8.0.0) installed, then from the CLI in root directory, call `make create_conda_env` which create a conda environment with snakemake. Activate this environment before proceeding.
+4. In the CLI, navigate to the `workflow/` directory. To execute the code, run `make results`, which will install the necessary conda environments and execute the snakemake workflow, processing any data necessary to create the result figures. The output will be saved in the `fig_path` that was set in the `config.yml` file.
+    * Note that is you are running on an apple computer with an M1 chip, you may encounter an issue when the workflow attempts to install `r-matchit`, which is not currently built for the arm64 architecture. The solutions to this include look at each .yaml file in the `workflow/envs` directory and install these into a single conda environment, and through R use the `install.packages("matchit")` command to install it yourself through the CRAN package management system. Once the new environment is activated, use the command `snakemake -j 4 results --rerun-triggers mtime` in the `workflow/` directory to execure the code.
+    * If the workflow attempts to download files from BigQuery (which will raise an error unless you are setup with access), or if it attepts to execute the novelty subworkflow (which will take a very very long time), then this means that the files are out of date and snakemake feels the need to update them. To resolve this, use the command `touch <path-to-project>/science_criticism/data/downloaded/*` and `touch <path-to-project>/science_criticism/data/derived/matched/*`, which will update their timestamps. Then re-run the workflow.
 
+
+## Citation
+
+```bibtex
+@misc{chen2024criticism,
+  Author = {Bingsheng Chen and Dakota Murray and Yixuan Liu and Albert-László Barabási},
+  Title = {The origin, consequence, and visibility of criticism in science},
+  Year = {2024},
+  Eprint = {arXiv:2412.02809},
+}
 ```
-./install.sh PATH_TO_YOUR_PROJECT_REPO
-```
-
-For instance, 
-
-```
-./install.sh ../my_project/
-```
-
-This script creates the following folders and files. 
-
-1. `data` for raw & derived datasets. 
-1. `libs` for librares for the project.
-1. `models` for trained models.
-1. `notebooks` for (timestamped) experiment notebooks.
-1. `paper` for manuscripts.
-1. `results` for results (figures, tables, etc.)
-1. `workflow` for workflow files and scripts.
-1. `.gitignore` for temporary and binary files to be ignored by git (LaTeX, Python, Jupyter, data files, etc.)
-
-## Using Python virtual environment
-
-Change the `PROJ_NAME` variable in `Makefile` to your project name. 
-Then create a virtual environment either with Python's vanilla `virtualenv` module or with [Anaconda](https://www.anaconda.com/).
-You can also use tools like `poetry`. 
-
-`.envrc` allows automatic activation of virtual environment. See [direnv](https://yyiki.org/search/Software/direnv). 
-
-### with `uv`
-
-Create a virtual environment in the current directory (inside `.venv`). 
-
-```sh
-uv venv
-source .venv/bin/activate
-```
-
-Create a `requirements.in` file that lists high-level package requirements. For instance, 
-
-```sh
-pandas
-matplotlib
-jupyter
-
-# local libraries
--e ./libs/xxxx
-```
-
-Install them directly or create a lock file first (note that this lock file is platform-specific and may not translate into other systems) and then install it. 
-
-```sh
-uv pip install -r requirements.in
-```
-
-```sh
-uv pip compile requirements.in -o requirements.txt
-uv pip install -r requirements.txt
-```
-
-
-### Anaconda
-
-First create a virtual environment for the project.
-
-```
-make create_conda_env
-```
-
-and activate it with
-
-```
-conda activate PROJNAME
-```
-
-or deactivate it with
-
-```
-conda deactivate
-```
-
-Use `conda install` to install packages. Thanks to `nb_conda` package, you
-don't need to individually install `ipykernel` for Jupyter. 
-
-## Using a project package 
-
-For the project package, use `pip install -e` command to install it as an
-_"editable"_ package that does not require reinstallation after changes. 
-
